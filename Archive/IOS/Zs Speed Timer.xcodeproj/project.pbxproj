@@ -1,0 +1,537 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2F449B0419440F176333CA55 /* Pods_Zs_Speed_Timer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6D7DDFC812C67D660EB35C94 /* Pods_Zs_Speed_Timer.framework */; };
+		3711FF5927B68F0F003E7E4D /* SetupCheckpointsConnectToWifiViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3711FF5827B68F0F003E7E4D /* SetupCheckpointsConnectToWifiViewController.swift */; };
+		3711FF5B27B68F27003E7E4D /* SetupCheckpointsCredentialsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3711FF5A27B68F27003E7E4D /* SetupCheckpointsCredentialsViewController.swift */; };
+		3711FF6027B69686003E7E4D /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3711FF5F27B69686003E7E4D /* Utils.swift */; };
+		371EEF9D27B8F356000EB9D4 /* SetCourseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371EEF9C27B8F356000EB9D4 /* SetCourseViewController.swift */; };
+		371EEFA027B91EE4000EB9D4 /* StartRunViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371EEF9F27B91EE4000EB9D4 /* StartRunViewController.swift */; };
+		371EEFA227B96333000EB9D4 /* Run.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371EEFA127B96333000EB9D4 /* Run.swift */; };
+		37317AFC27ABC534005445C0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37317AFB27ABC534005445C0 /* AppDelegate.swift */; };
+		37317AFE27ABC534005445C0 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37317AFD27ABC534005445C0 /* SceneDelegate.swift */; };
+		37317B0027ABC534005445C0 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37317AFF27ABC534005445C0 /* MainViewController.swift */; };
+		37317B0327ABC534005445C0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 37317B0127ABC534005445C0 /* Main.storyboard */; };
+		37317B0527ABC535005445C0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 37317B0427ABC535005445C0 /* Assets.xcassets */; };
+		37317B0827ABC535005445C0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 37317B0627ABC535005445C0 /* LaunchScreen.storyboard */; };
+		377E220727BA29C800B938A5 /* ViewTimesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 377E220627BA29C800B938A5 /* ViewTimesViewController.swift */; };
+		377E220A27BA2BB200B938A5 /* RunTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 377E220827BA2BB200B938A5 /* RunTableViewCell.swift */; };
+		377E220B27BA2BB200B938A5 /* RunTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 377E220927BA2BB200B938A5 /* RunTableViewCell.xib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0CFDABD12038E06180ACEBEA /* Pods-Zs Speed Timer.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zs Speed Timer.release.xcconfig"; path = "Target Support Files/Pods-Zs Speed Timer/Pods-Zs Speed Timer.release.xcconfig"; sourceTree = "<group>"; };
+		3711FF5827B68F0F003E7E4D /* SetupCheckpointsConnectToWifiViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCheckpointsConnectToWifiViewController.swift; sourceTree = "<group>"; };
+		3711FF5A27B68F27003E7E4D /* SetupCheckpointsCredentialsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupCheckpointsCredentialsViewController.swift; sourceTree = "<group>"; };
+		3711FF5F27B69686003E7E4D /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		371EEF9C27B8F356000EB9D4 /* SetCourseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetCourseViewController.swift; sourceTree = "<group>"; };
+		371EEF9F27B91EE4000EB9D4 /* StartRunViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartRunViewController.swift; sourceTree = "<group>"; };
+		371EEFA127B96333000EB9D4 /* Run.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Run.swift; sourceTree = "<group>"; };
+		37317AF827ABC534005445C0 /* Zs Speed Timer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Zs Speed Timer.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		37317AFB27ABC534005445C0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		37317AFD27ABC534005445C0 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		37317AFF27ABC534005445C0 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		37317B0227ABC534005445C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		37317B0427ABC535005445C0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		37317B0727ABC535005445C0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		37317B0927ABC535005445C0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		377E220627BA29C800B938A5 /* ViewTimesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewTimesViewController.swift; sourceTree = "<group>"; };
+		377E220827BA2BB200B938A5 /* RunTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTableViewCell.swift; sourceTree = "<group>"; };
+		377E220927BA2BB200B938A5 /* RunTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = RunTableViewCell.xib; sourceTree = "<group>"; };
+		4311F6862E439E2E562A2717 /* Pods-Zs Speed Timer.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Zs Speed Timer.debug.xcconfig"; path = "Target Support Files/Pods-Zs Speed Timer/Pods-Zs Speed Timer.debug.xcconfig"; sourceTree = "<group>"; };
+		6D7DDFC812C67D660EB35C94 /* Pods_Zs_Speed_Timer.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Zs_Speed_Timer.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		37317AF527ABC534005445C0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F449B0419440F176333CA55 /* Pods_Zs_Speed_Timer.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3711FF5C27B68F2E003E7E4D /* Storyboards */ = {
+			isa = PBXGroup;
+			children = (
+				37317B0127ABC534005445C0 /* Main.storyboard */,
+				37317B0627ABC535005445C0 /* LaunchScreen.storyboard */,
+			);
+			path = Storyboards;
+			sourceTree = "<group>";
+		};
+		3711FF5D27B68F3F003E7E4D /* Setup Checkpoints */ = {
+			isa = PBXGroup;
+			children = (
+				3711FF5827B68F0F003E7E4D /* SetupCheckpointsConnectToWifiViewController.swift */,
+				3711FF5A27B68F27003E7E4D /* SetupCheckpointsCredentialsViewController.swift */,
+			);
+			path = "Setup Checkpoints";
+			sourceTree = "<group>";
+		};
+		3711FF5E27B68F4E003E7E4D /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				3711FF5F27B69686003E7E4D /* Utils.swift */,
+				37317AFD27ABC534005445C0 /* SceneDelegate.swift */,
+				37317AFB27ABC534005445C0 /* AppDelegate.swift */,
+				37317AFF27ABC534005445C0 /* MainViewController.swift */,
+				37317B0427ABC535005445C0 /* Assets.xcassets */,
+				371EEFA127B96333000EB9D4 /* Run.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		371EEF9B27B8F345000EB9D4 /* Set Course */ = {
+			isa = PBXGroup;
+			children = (
+				371EEF9C27B8F356000EB9D4 /* SetCourseViewController.swift */,
+			);
+			path = "Set Course";
+			sourceTree = "<group>";
+		};
+		371EEF9E27B91EC7000EB9D4 /* Start Run */ = {
+			isa = PBXGroup;
+			children = (
+				371EEF9F27B91EE4000EB9D4 /* StartRunViewController.swift */,
+			);
+			path = "Start Run";
+			sourceTree = "<group>";
+		};
+		37317AEF27ABC534005445C0 = {
+			isa = PBXGroup;
+			children = (
+				37317AFA27ABC534005445C0 /* Zs Speed Timer */,
+				37317AF927ABC534005445C0 /* Products */,
+				C0E274EEF2B0FB09C974BCE5 /* Pods */,
+				F74C12F8ECF147BE20939379 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		37317AF927ABC534005445C0 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				37317AF827ABC534005445C0 /* Zs Speed Timer.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		37317AFA27ABC534005445C0 /* Zs Speed Timer */ = {
+			isa = PBXGroup;
+			children = (
+				3711FF5E27B68F4E003E7E4D /* Main */,
+				3711FF5D27B68F3F003E7E4D /* Setup Checkpoints */,
+				371EEF9B27B8F345000EB9D4 /* Set Course */,
+				371EEF9E27B91EC7000EB9D4 /* Start Run */,
+				377E220527BA29B000B938A5 /* View Times */,
+				3711FF5C27B68F2E003E7E4D /* Storyboards */,
+				37317B0927ABC535005445C0 /* Info.plist */,
+			);
+			path = "Zs Speed Timer";
+			sourceTree = "<group>";
+		};
+		377E220527BA29B000B938A5 /* View Times */ = {
+			isa = PBXGroup;
+			children = (
+				377E220627BA29C800B938A5 /* ViewTimesViewController.swift */,
+				377E220827BA2BB200B938A5 /* RunTableViewCell.swift */,
+				377E220927BA2BB200B938A5 /* RunTableViewCell.xib */,
+			);
+			path = "View Times";
+			sourceTree = "<group>";
+		};
+		C0E274EEF2B0FB09C974BCE5 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				4311F6862E439E2E562A2717 /* Pods-Zs Speed Timer.debug.xcconfig */,
+				0CFDABD12038E06180ACEBEA /* Pods-Zs Speed Timer.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		F74C12F8ECF147BE20939379 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6D7DDFC812C67D660EB35C94 /* Pods_Zs_Speed_Timer.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		37317AF727ABC534005445C0 /* Zs Speed Timer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 37317B0C27ABC535005445C0 /* Build configuration list for PBXNativeTarget "Zs Speed Timer" */;
+			buildPhases = (
+				25F8599D2260BAF1CDE52176 /* [CP] Check Pods Manifest.lock */,
+				37317AF427ABC534005445C0 /* Sources */,
+				37317AF527ABC534005445C0 /* Frameworks */,
+				37317AF627ABC534005445C0 /* Resources */,
+				657DFAF30CF1AE419C1039D2 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Zs Speed Timer";
+			productName = "Zs Speed Timer";
+			productReference = 37317AF827ABC534005445C0 /* Zs Speed Timer.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		37317AF027ABC534005445C0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1320;
+				LastUpgradeCheck = 1320;
+				TargetAttributes = {
+					37317AF727ABC534005445C0 = {
+						CreatedOnToolsVersion = 13.2.1;
+					};
+				};
+			};
+			buildConfigurationList = 37317AF327ABC534005445C0 /* Build configuration list for PBXProject "Zs Speed Timer" */;
+			compatibilityVersion = "Xcode 13.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 37317AEF27ABC534005445C0;
+			productRefGroup = 37317AF927ABC534005445C0 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				37317AF727ABC534005445C0 /* Zs Speed Timer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		37317AF627ABC534005445C0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				37317B0827ABC535005445C0 /* LaunchScreen.storyboard in Resources */,
+				377E220B27BA2BB200B938A5 /* RunTableViewCell.xib in Resources */,
+				37317B0527ABC535005445C0 /* Assets.xcassets in Resources */,
+				37317B0327ABC534005445C0 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		25F8599D2260BAF1CDE52176 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Zs Speed Timer-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		657DFAF30CF1AE419C1039D2 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Zs Speed Timer/Pods-Zs Speed Timer-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Zs Speed Timer/Pods-Zs Speed Timer-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Zs Speed Timer/Pods-Zs Speed Timer-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		37317AF427ABC534005445C0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				37317B0027ABC534005445C0 /* MainViewController.swift in Sources */,
+				371EEFA227B96333000EB9D4 /* Run.swift in Sources */,
+				371EEFA027B91EE4000EB9D4 /* StartRunViewController.swift in Sources */,
+				3711FF5B27B68F27003E7E4D /* SetupCheckpointsCredentialsViewController.swift in Sources */,
+				37317AFC27ABC534005445C0 /* AppDelegate.swift in Sources */,
+				377E220A27BA2BB200B938A5 /* RunTableViewCell.swift in Sources */,
+				37317AFE27ABC534005445C0 /* SceneDelegate.swift in Sources */,
+				371EEF9D27B8F356000EB9D4 /* SetCourseViewController.swift in Sources */,
+				3711FF5927B68F0F003E7E4D /* SetupCheckpointsConnectToWifiViewController.swift in Sources */,
+				377E220727BA29C800B938A5 /* ViewTimesViewController.swift in Sources */,
+				3711FF6027B69686003E7E4D /* Utils.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		37317B0127ABC534005445C0 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				37317B0227ABC534005445C0 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		37317B0627ABC535005445C0 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				37317B0727ABC535005445C0 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		37317B0A27ABC535005445C0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		37317B0B27ABC535005445C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		37317B0D27ABC535005445C0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4311F6862E439E2E562A2717 /* Pods-Zs Speed Timer.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9KY9NVLJFW;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Alamofire/Alamofire.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/MBProgressHUD/MBProgressHUD.framework/Headers\"",
+				);
+				INFOPLIST_FILE = "Zs Speed Timer/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "example.Zs-Speed-Timer";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		37317B0E27ABC535005445C0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0CFDABD12038E06180ACEBEA /* Pods-Zs Speed Timer.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9KY9NVLJFW;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/Alamofire/Alamofire.framework/Headers\"",
+					"\"${PODS_CONFIGURATION_BUILD_DIR}/MBProgressHUD/MBProgressHUD.framework/Headers\"",
+				);
+				INFOPLIST_FILE = "Zs Speed Timer/Info.plist";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "example.Zs-Speed-Timer";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		37317AF327ABC534005445C0 /* Build configuration list for PBXProject "Zs Speed Timer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				37317B0A27ABC535005445C0 /* Debug */,
+				37317B0B27ABC535005445C0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		37317B0C27ABC535005445C0 /* Build configuration list for PBXNativeTarget "Zs Speed Timer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				37317B0D27ABC535005445C0 /* Debug */,
+				37317B0E27ABC535005445C0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 37317AF027ABC534005445C0 /* Project object */;
+}
