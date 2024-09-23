@@ -4,7 +4,7 @@
 
 #define CAPSENSE_PIN 33
 
-float capsense_threshold = 14;
+float capsense_threshold = 20;
 bool last_state = false;
 
 long capsense_val = 10;
@@ -17,8 +17,6 @@ void setup() {
    ledcAttach(RED_PIN, 5000, 8);
    ledcAttach(GREEN_PIN, 5000, 8);
    ledcAttach(BLUE_PIN, 5000, 8);
-
-   pinMode(POT_PIN, INPUT);
 }
 
 void loop() {
