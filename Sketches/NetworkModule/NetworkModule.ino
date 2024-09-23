@@ -1,5 +1,6 @@
 #include <EEPROM.h>
 #include "../_include/NetworkModule.h"
+#include "../_include/Eeprom_Helpers.h"
 
 #define SERIAL_BAUDRATE 115200
 #define EEPROM_SIZE 512
@@ -76,22 +77,6 @@ void displayColorLED(int r, int g, int b) {
   ledcWrite(RED_PIN, r);
   ledcWrite(GREEN_PIN, g);
   ledcWrite(BLUE_PIN, b);
-}
-
-void dumpEeprom() {
-  const int bytesPerRow = 32;
-  int i = 0;
-
-  Serial.printf("--- Dumping %d bytes from EEPROM ---\n", EEPROM_SIZE);
-  for (int row = 0; row < (EEPROM_SIZE / bytesPerRow + 1); row++) {
-    Serial.printf("%08x | ", i);
-    for (int j = 0; j < bytesPerRow; j++) {
-      Serial.printf("%c", EEPROM.read(i));
-      i++;
-    }
-    Serial.printf("\n");
-  }
-  Serial.printf("--- End of EEPROM ---");
 }
 
 bool connectToWifi() {
