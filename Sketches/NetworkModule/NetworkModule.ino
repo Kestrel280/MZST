@@ -1,4 +1,5 @@
 #include <EEPROM.h>
+#include "../_include/NetworkModule.h"
 
 #define SERIAL_BAUDRATE 115200
 #define EEPROM_SIZE 512
