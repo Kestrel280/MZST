@@ -19,4 +19,10 @@ void dumpEeprom() {
   Serial.printf("--- End of EEPROM ---\n");
 }
 
+void readEeprom(char* out, int startByte, int size) {
+	for (int i = startByte; i < startByte + size; i++) {
+		*(out + i) = EEPROM.read(i);
+	}
+}
+
 #endif
