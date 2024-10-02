@@ -2,6 +2,9 @@ package com.example.androidserver;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -62,7 +65,11 @@ public class Server {
             Log.i("server", "Beginning message loop");
             while ((line = in.readLine()) != null) {
                 Log.i("server", "Server received message: " + line);
-                
+                Message msg = MainActivity.uiMessageHandler.obtainMessage();
+                Bundle bundle = new Bundle();
+                bundle.putCharSequence("MESSAGE", line);
+                msg.setData(bundle);
+                MainActivity.uiMessageHandler.sendMessage(msg);
             }
 
             Log.i("server", "Closing connection");

@@ -37,7 +37,7 @@ void setup() {
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
   while(!client.connect(HOST, PORT)) {
     Serial.printf(".");
-    delay(500);
+    delay(5000);
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 }
