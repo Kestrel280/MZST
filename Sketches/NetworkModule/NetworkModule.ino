@@ -6,6 +6,9 @@
 #define SERIAL_BAUDRATE 115200
 #define EEPROM_SIZE 512
 
+// Debug
+#define CAPSENS_PIN 33
+
 NetworkModule module;
 WiFiClient client;
 
@@ -43,9 +46,9 @@ void setup() {
 }
 
 void loop() {
-  long rand;
-  Serial.printf("Sending message to host... ");
-  client.printf("%d\n", rand = random(100));
-  Serial.printf("Sent message %d\n", rand);
-  delay(5000);
+  long capsens = touchRead(CAPSENS_PIN);
+  Serial.printf("Capsens val = %3d... ", capsens);
+  client.printf("%d\n", capsens);
+  Serial.printf("Sent to server\n");
+  delay(50);
 }

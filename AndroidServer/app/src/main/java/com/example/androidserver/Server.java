@@ -64,7 +64,7 @@ public class Server {
             String line = "";
             Log.i("server", "Beginning message loop");
             while ((line = in.readLine()) != null) {
-                Log.i("server", "Server received message: " + line);
+                //Log.i("server", "Server received message: " + line);
                 Message msg = MainActivity.uiMessageHandler.obtainMessage();
                 Bundle bundle = new Bundle();
                 bundle.putCharSequence("MESSAGE", line);

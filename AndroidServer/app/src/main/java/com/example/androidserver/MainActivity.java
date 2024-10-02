@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
     public static Handler uiMessageHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message inputMessage) {
-            Log.i("mainThread", "Main thread received message " + inputMessage.getData().getCharSequence("MESSAGE"));
+            //Log.i("mainThread", "Main thread received message " + inputMessage.getData().getCharSequence("MESSAGE"));
             debugTv.setText(inputMessage.getData().getCharSequence("MESSAGE"));
         }
     };
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         debugTv = findViewById(R.id.debugText);
-        debugTv.setText("asdf");
+        debugTv.setText("Waiting for client");
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
