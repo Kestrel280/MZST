@@ -34,12 +34,8 @@ public class MainActivity extends AppCompatActivity {
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        Thread connectionListenerThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                new Server(wifiManager, Server.PORT);
-            }
-        });
-        connectionListenerThread.start();
+        Server server = new Server(wifiManager, Server.PORT);
+
+        Log.i("main", "Main activity done");
     }
 }
