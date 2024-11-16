@@ -24,6 +24,14 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    public static void debugMsgToAppView(String line) {
+        Message msg = MainActivity.uiMessageHandler.obtainMessage();
+        Bundle bundle = new Bundle();
+        bundle.putCharSequence("MESSAGE", line);
+        msg.setData(bundle);
+        MainActivity.uiMessageHandler.sendMessage(msg);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

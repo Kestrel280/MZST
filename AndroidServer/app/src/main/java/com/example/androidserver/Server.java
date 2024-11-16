@@ -84,6 +84,7 @@ public class Server {
         public void registerClient(Socket socket) {
             Client client = new Client(socket);
             clients.put(client.id, client);
+            MainActivity.debugMsgToAppView(String.format("Registered client %d", client.id));
             Log.i("server", String.format("Handler registered client %d", client.id));
         }
 
@@ -95,7 +96,6 @@ public class Server {
                 //  this for loop blocks on that client forever
                 for (Client client : clients.values()) {
                     client.readMessageQueue();
-                    Log.i("server", String.format("Handler processed client %d", client.id));
                 }
             }
         }
