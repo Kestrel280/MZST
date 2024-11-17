@@ -27,7 +27,6 @@ uint16_t tpThresh;
 bool touched = false;
 
 void touchpadCallback(void* arg) {
-  noInterrupts();
   if (!touched) {
     touched = true;
     outboundMessageQueue.push("TRIGGERED");
