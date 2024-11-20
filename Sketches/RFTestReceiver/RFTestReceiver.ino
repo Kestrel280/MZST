@@ -1,8 +1,8 @@
 const int receivePin = 26;
-const int pulseSequence[] = {0, 1, 0, 0, 1, 0, 1, 1, 0, 0}; // pulse pattern
+const int pulseSequence[] = {1, 0, 1, 0, 1, 0, 1, 1, 0, 0}; // pulse pattern
 const int pulseDelay = 1000; // width of pulse in microseconds
 const int sequenceLength = sizeof(pulseSequence) / sizeof(pulseSequence[0]); // length of the pulse array
-const int matchThreshold = .9; // Minimum percentage of matches required (e.g., 80%)
+const float matchThreshold = .9; // Minimum percentage of matches required (e.g., .8 = 80%)
 
 void setup() {
   pinMode(receivePin, INPUT);
@@ -22,6 +22,8 @@ void loop() {
   for (int i = 0; i < sequenceLength; i++) {
     receivedSequence[i] = digitalRead(receivePin); // Read the pin state
     delayMicroseconds(pulseDelay); // Wait for the expected pulse timing
+    Serial.print(receivedSequence[i]);
+    Serial.print(", ");
   }
 
   // Compare received sequence with the expected sequence
@@ -38,5 +40,7 @@ void loop() {
   // Check if the match percentage meets the threshold
   if (matchPercentage >= matchThreshold) {
     Serial.println("Sequence matched!");
+  } else {
+    Serial.println("No dice, cowboy!");
   }
 }

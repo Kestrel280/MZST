@@ -1,5 +1,5 @@
 const int transmitPin = 27;
-const int pulseSequence[] = {0, 1, 0, 0, 1, 0, 1, 1, 0, 0}; // pulse pattern
+const int pulseSequence[] = {1, 0, 1, 0, 1, 0, 1, 1, 0, 0}; // pulse pattern
 const int pulseDelay = 1000; // width of pulse in microseconds
 const int sequenceLength = sizeof(pulseSequence) / sizeof(pulseSequence[0]); // length of the pulse array
 
