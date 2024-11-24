@@ -19,7 +19,6 @@ public class MainActivity extends AppCompatActivity {
     public static Handler uiMessageHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message inputMessage) {
-            //Log.i("mainThread", "Main thread received message " + inputMessage.getData().getCharSequence("MESSAGE"));
             debugTv.setText(inputMessage.getData().getCharSequence("MESSAGE"));
         }
     };

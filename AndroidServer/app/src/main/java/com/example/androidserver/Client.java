@@ -1,16 +1,15 @@
 package com.example.androidserver;
 
-import android.os.Bundle;
-import android.os.Message;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+
+import java.util.List;
 
 public class Client {
     private static int __debug_id = 0;
@@ -29,39 +28,29 @@ public class Client {
         }
     }
 
-    public void readMessageQueue() {
-        String line = "";
+    public List<ClientMessage> readMessageQueue() {
+        char[] line = new char[ClientMessage.PacketSize];
+        ClientMessage msg;
+        List<ClientMessage> messages = new ArrayList<>();
 
         try {
             while (reader.ready())  {
-                line = reader.readLine();
-                processMessage(line);
-                MainActivity.debugMsgToAppView(String.format("Client %d says: %s", id, line));
-//                Message msg = MainActivity.uiMessageHandler.obtainMessage();
- //               Bundle bundle = new Bundle();
-  //              bundle.putCharSequence("MESSAGE", String.format("Client %d msg: %s", id, line));
-   //             msg.setData(bundle);
-    //            MainActivity.uiMessageHandler.sendMessage(msg);
+                reader.read(line, 0, ClientMessage.PacketSize);
+                msg = new ClientMessage(line);
+                messages.add(msg);
+                Log.i("server", String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
+                MainActivity.debugMsgToAppView(String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return messages;
     }
 
-    // TODO maybe have this return the response instead of sending it right in here
-    private void processMessage(String msg) {
-        Log.i("server", String.format("Handler received message from client %d: %s", id, msg));
-        String response = "";
-        switch (msg) {
-            case "TRIGGERED": {
-                response = "RESET";
-                break;
-            }
-            default: break;
-        }
-        if (!response.isEmpty()) {
-            Log.i("server", String.format("Server sending response to client %d: %s", id, response));
-            writer.println(response);
+    public void sendMessage(ServerMessage msg) {
+        if (!msg.text.isEmpty()) {
+            Log.i("server", String.format("Sending message to client %d: %s", id, msg.text));
+            writer.println(msg.text);
         }
     }
 }

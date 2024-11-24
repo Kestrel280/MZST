@@ -3,7 +3,6 @@ package com.example.androidserver;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -13,21 +12,22 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 
 public class Server {
     public static final int PORT = 5000;
 
     protected ServerSocket  serverSocket = null;
-    protected Handler handler;
-    protected Listener listener;
+    protected ClientHandler clientHandler;
+    protected ConnectionListener connectionListener;
 
     public Server(WifiManager wifiManager, int port) {
 
         Runtime.getRuntime().addShutdownHook(new Thread( () -> {
             try {
                 serverSocket.close();
-                handler.shutdown();
-                listener.shutdown();
+                clientHandler.shutdown();
+                connectionListener.shutdown();
                 Log.i("server", "Server shutdown hook");
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -39,21 +39,21 @@ public class Server {
             serverSocket = new ServerSocket(port);
             Log.i("server", String.format("(Server) Server started at %s:%d", getLocalIpAddress(), PORT));
 
-            handler = new Handler();
-            Thread handlerThread = new Thread(handler);
+            clientHandler = new ClientHandler();
+            Thread handlerThread = new Thread(clientHandler);
             handlerThread.start();
 
-            listener = new Listener(serverSocket, handler);
-            Thread listenerThread = new Thread(listener);
+            connectionListener = new ConnectionListener(serverSocket, clientHandler);
+            Thread listenerThread = new Thread(connectionListener);
             listenerThread.start();
         } catch (IOException i) {
             Log.d("server", i.toString());
         }
     }
 
-    private class Listener implements Runnable {
+    private class ConnectionListener implements Runnable {
         protected Socket socket;
-        Listener(ServerSocket serverSocket, Handler handler) {
+        ConnectionListener(ServerSocket serverSocket, ClientHandler clientHandler) {
             Log.i("server", "Listener started");
         }
 
@@ -65,7 +65,7 @@ public class Server {
                 Log.i("server", "Listener waiting for client...");
                 try {
                     socket = serverSocket.accept();
-                    handler.registerClient(socket);
+                    clientHandler.registerClient(socket);
                 } catch (IOException e) {
                     Log.d("server", e.toString());
                 }
@@ -73,9 +73,9 @@ public class Server {
         }
     }
 
-    private class Handler implements Runnable {
+    private class ClientHandler implements Runnable {
         public HashMap<Integer, Client> clients = new HashMap<>();
-        Handler() {
+        ClientHandler() {
             Log.i("server", "Handler started");
         }
 
@@ -90,15 +90,34 @@ public class Server {
 
         @Override
         public void run() {
+            ServerMessage response;
+            List<ClientMessage> messages;
             while (true) {
                 // TODO may want to add a timeout here;
                 //  if one client is broken and sending "infinite" messages,
                 //  this for loop blocks on that client forever
                 for (Client client : clients.values()) {
-                    client.readMessageQueue();
+                    messages = client.readMessageQueue();
+                    for (ClientMessage message : messages) {
+                        response = processMessage(message);
+                        client.sendMessage(response);
+                    }
                 }
             }
         }
+    }
+
+    private ServerMessage processMessage(ClientMessage cMsg) {
+        ServerMessage response = new ServerMessage("ACK");
+
+        switch (cMsg.type) {
+            case ClientMessage.TRIGGERED: {
+                response.text = "RESET";
+                break;
+            }
+            default: break;
+        }
+        return response;
     }
 
     public static String getLocalIpAddress() {
@@ -117,6 +136,4 @@ public class Server {
         }
         return null;
     }
-
-
 }
