@@ -3,6 +3,8 @@ package com.example.androidserver;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
+import com.example.androidserver.ServerAction.ActionType;
+
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -17,9 +19,24 @@ import java.util.List;
 public class Server {
     public static final int PORT = 5000;
 
+    private ServerState state;
+    private ActionHandler actionHandler;
+
     protected ServerSocket  serverSocket = null;
     protected ClientHandler clientHandler;
     protected ConnectionListener connectionListener;
+
+    public ServerState getState() {
+        return state;
+    }
+
+    public enum ServerState {
+        IDLE,
+        RUN,
+        DEFINE,
+        READY,
+        FINISHED;
+    }
 
     public Server(WifiManager wifiManager, int port) {
 
@@ -34,6 +51,8 @@ public class Server {
             }
         }));
         Log.i("server", String.format("(Server) Server registered shutdown hook", getLocalIpAddress(), PORT));
+
+        this.actionHandler = new ActionHandler(this);
 
         try {
             serverSocket = new ServerSocket(port);
@@ -112,6 +131,10 @@ public class Server {
 
         switch (cMsg.type) {
             case ClientMessage.TRIGGERED: {
+                actionHandler.processAction(
+                        new ServerAction(ActionType.TRIGGER)
+                                .setClientId(cMsg.id)
+                                .setTimestamp(cMsg.timestamp));
                 response.text = "RESET";
                 break;
             }
@@ -119,6 +142,10 @@ public class Server {
         }
         return response;
     }
+
+    /* *****************************
+        Utilities
+     * *****************************/
 
     public static String getLocalIpAddress() {
         try {
