@@ -13,10 +13,63 @@
         android:layout_height="wrap_content"
         android:text="Hello World!"
         android:textAlignment="center"
-        android:textSize="75sp"
+        android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.854" />
+
+    <Button
+        android:id="@+id/debugBtnNew"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="debugBtn"
+        android:tag="new"
+        android:text="@string/debugBtnNewText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/debugBtnLoad"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="debugBtn"
+        android:tag="load"
+        android:text="@string/debugBtnLoadText"
+        app:layout_constraintStart_toEndOf="@+id/debugBtnNew"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/debugBtnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="88dp"
+        android:onClick="debugBtn"
+        android:tag="save"
+        android:text="@string/debugBtnSaveText"
+        app:layout_constraintStart_toEndOf="@+id/debugBtnNew"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/debugBtnReset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="176dp"
+        android:onClick="debugBtn"
+        android:tag="reset"
+        android:text="@string/debugBtnResetText"
+        app:layout_constraintStart_toEndOf="@+id/debugBtnNew"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/currentCourse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/debugTextCurrentCourseText"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/debugBtnNew" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

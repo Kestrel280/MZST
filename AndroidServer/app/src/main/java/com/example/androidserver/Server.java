@@ -144,6 +144,12 @@ public class Server {
         return response;
     }
 
+    public String sendAction(ServerAction action) {
+        Log.i("server", "Server received action of type " + action.type.toString());
+        actionHandler.processAction(action);
+        return "";
+    }
+
     /* *****************************
         Utilities
      * *****************************/

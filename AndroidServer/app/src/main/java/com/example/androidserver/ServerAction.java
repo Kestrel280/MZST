@@ -5,6 +5,7 @@ public class ServerAction {
     public int clientId;
     public int requesterId;
     public long timestamp;
+    public int courseId;
 
     public enum ActionType {
         SAVE,
@@ -18,6 +19,8 @@ public class ServerAction {
     ServerAction(ActionType type) {
         this.type = type;
         this.clientId = -1;
+        this.requesterId = -1;
+        this.courseId = -1;
     }
     public ServerAction setClientId(int id) {
         this.clientId = id;
@@ -29,6 +32,10 @@ public class ServerAction {
     }
     public ServerAction setRequesterId(int id) {
         this.requesterId = id;
+        return this;
+    }
+    public ServerAction setCourseId(int id) {
+        this.courseId = id;
         return this;
     }
 }

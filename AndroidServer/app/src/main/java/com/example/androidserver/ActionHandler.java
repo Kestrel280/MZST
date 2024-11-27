@@ -1,5 +1,7 @@
 package com.example.androidserver;
 
+import android.util.Log;
+
 import com.example.androidserver.Server.ServerState;
 
 public class ActionHandler {
@@ -9,9 +11,13 @@ public class ActionHandler {
         this.server = server;
     }
 
+    // Note: LOAD action comes paired with a courseId value,
+    //  which should index into a database and retrieve a Course
+
     // Main dispatch
     public ServerState processAction(ServerAction action) {
         ServerState newState;
+        Log.i("actionhandler", "Action handler processing action of type " + action.type.toString());
         switch (server.getState()) {
             case DEFINE:    newState = doDefine(action); break;
             case RUN:       newState = doRun(action); break;
