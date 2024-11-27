@@ -38,6 +38,7 @@ public class Course {
 
     public Course setName(String newName) {
         this.name = newName;
+        return this;
     }
 
 

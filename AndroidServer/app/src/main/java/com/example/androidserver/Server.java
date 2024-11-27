@@ -52,6 +52,7 @@ public class Server {
         }));
         Log.i("server", String.format("(Server) Server registered shutdown hook", getLocalIpAddress(), PORT));
 
+        this.state = ServerState.IDLE;
         this.actionHandler = new ActionHandler(this);
 
         try {
