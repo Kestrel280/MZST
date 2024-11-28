@@ -34,7 +34,7 @@ const char MTYPE_TOUCHED  = 100;
 const char MTYPE_ERROR    = 33;
 
 // State globals
-unsigned short id = 1;
+unsigned short id = 2;
 bool touched = false;
 
 // Other globals
@@ -119,7 +119,7 @@ void touchpadCallback(void* arg) {
 }
 
 void processIncomingMessage(String msg) {
-  Serial.printf("Received message from server: %s\n", msg);
+  Serial.printf("Received message from server: %s\n", msg.c_str());
   //for (char c : msg) { Serial.printf("%x ", c); }
 
   if (msg == "RESET") {
