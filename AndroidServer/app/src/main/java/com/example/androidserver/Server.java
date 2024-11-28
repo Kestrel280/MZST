@@ -2,6 +2,7 @@ package com.example.androidserver;
 
 import android.net.wifi.WifiManager;
 import android.util.Log;
+import android.util.Pair;
 
 import com.example.androidserver.ServerAction.ActionType;
 
@@ -12,9 +13,12 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.sql.Array;
+import java.util.ArrayDeque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Queue;
 
 public class Server {
     public static final int PORT = 5000;
@@ -93,8 +97,10 @@ public class Server {
         }
     }
 
-    private class ClientHandler implements Runnable {
+    public class ClientHandler implements Runnable {
         public HashMap<Integer, Client> clients = new HashMap<>();
+        Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
+        Queue<ServerMessage> outboundBroadcastQueue = new ArrayDeque<>();
         ClientHandler() {
             Log.i("server", "Handler started");
         }
@@ -108,18 +114,40 @@ public class Server {
             Log.i("server", String.format("Handler registered client %d", client.id));
         }
 
+        public void postBroadcast(ServerMessage msg) {
+            outboundBroadcastQueue.add(msg);
+        }
+
+        public void postMsg(int nodeId, ServerMessage msg) {
+            outboundMessageQueue.add(new Pair<>(nodeId, msg));
+        }
+
         @Override
         public void run() {
             ServerMessage response;
-            List<ClientMessage> messages;
+            List<ClientMessage> inboundMessages;
             while (true) {
-                // TODO may want to add a timeout here;
-                //  if one client is broken and sending "infinite" messages,
-                //  this for loop blocks on that client forever
+                // TODO may want to add timeouts here;
+
+                while (!outboundMessageQueue.isEmpty()) {
+                    Pair<Integer, ServerMessage> p = outboundMessageQueue.remove();
+                    Client client = clients.get(p.first);
+                    if (client != null) {
+                        client.sendMessage(p.second);
+                    }
+                }
+
+                while (!outboundBroadcastQueue.isEmpty()) {
+                    ServerMessage msg = outboundBroadcastQueue.remove();
+                    for (Client client : clients.values()) {
+                        client.sendMessage(msg);
+                    }
+                }
+
                 for (Client client : clients.values()) {
-                    messages = client.readMessageQueue();
-                    for (ClientMessage message : messages) {
-                        response = processMessage(message);
+                    inboundMessages = client.readMessageQueue();
+                    for (ClientMessage inboundMessage : inboundMessages) {
+                        response = processMessage(inboundMessage);
                         client.sendMessage(response);
                     }
                 }

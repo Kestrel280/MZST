@@ -8,7 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +21,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void debugBtn(View btnView) {
         ServerAction action = null;
+        ServerMessage msg = null;
+        EditText stringInputView = (EditText) findViewById(R.id.debugStringInput);
+        EditText numberInputView = (EditText) findViewById(R.id.debugNumberInput);
+        String stringInput = stringInputView.getText().toString();
+        Integer numberInput;
+        try {
+            numberInput = Integer.parseInt(numberInputView.getText().toString());
+        } catch (Exception e) {
+            numberInput = 0;
+        }
         switch (btnView.getTag().toString()) {
             case "new":
                 action = new ServerAction(ServerAction.ActionType.NEW);
@@ -38,6 +48,12 @@ public class MainActivity extends AppCompatActivity {
                 action = new ServerAction(ServerAction.ActionType.RESET);
                 Log.i("main", "debug button 'reset' clicked");
                 break;
+            case "send":
+                msg = new ServerMessage(stringInput);
+                server.clientHandler.postMsg(numberInput, msg);
+            case "broadcast":
+                msg = new ServerMessage(stringInput);
+                server.clientHandler.postBroadcast(msg);
         }
         if (action != null) {
             action.setRequesterId(0);
@@ -66,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         debugTv = findViewById(R.id.debugText);
-        debugTv.setText("Waiting for client");
+        debugTv.setText("Waiting for clients");
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 

@@ -4,5 +4,9 @@
     <string name="debugBtnLoadText">LOAD</string>
     <string name="debugBtnSaveText">SAVE</string>
     <string name="debugBtnResetText">RESET</string>
+    <string name="debugBtnSendText">Send</string>
+    <string name="debugBtnBroadcastText">Broadcast</string>
+    <string name="debugNumberInputHint">ID</string>
+    <string name="debugStringInputHint">Outbound message</string>
     <string name="debugTextCurrentCourseText">Current Course: </string>
 </resources>

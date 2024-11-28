@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:tag="broadcast"
     tools:context=".MainActivity">
 
     <TextView
@@ -70,6 +71,47 @@
         android:text="@string/debugTextCurrentCourseText"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/debugStringInput" />
+
+    <EditText
+        android:id="@+id/debugNumberInput"
+        android:layout_width="47dp"
+        android:layout_height="46dp"
+        android:autofillHints="@string/debugNumberInputHint"
+        android:ems="10"
+        android:hint="@string/debugNumberInputHint"
+        android:inputType="number"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/debugBtnNew" />
+
+    <Button
+        android:id="@+id/debugBtnSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="debugBtn"
+        android:tag="send"
+        android:text="@string/debugBtnSendText"
+        app:layout_constraintStart_toEndOf="@+id/debugNumberInput"
+        app:layout_constraintTop_toBottomOf="@+id/debugBtnSave" />
+
+    <Button
+        android:id="@+id/debugBtnBroadcast"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="debugBtn"
+        android:tag="broadcast"
+        android:text="@string/debugBtnBroadcastText"
+        app:layout_constraintStart_toEndOf="@+id/debugBtnSend"
+        app:layout_constraintTop_toBottomOf="@+id/debugBtnSave" />
+
+    <EditText
+        android:id="@+id/debugStringInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        android:text="@string/debugStringInputHint"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/debugNumberInput" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
