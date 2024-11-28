@@ -13,7 +13,6 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.sql.Array;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -101,6 +100,7 @@ public class Server {
         public HashMap<Integer, Client> clients = new HashMap<>();
         Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
         Queue<ServerMessage> outboundBroadcastQueue = new ArrayDeque<>();
+        Queue<Pair<Integer, Client>> newClientsQueue = new ArrayDeque<>();
         ClientHandler() {
             Log.i("server", "Handler started");
         }
@@ -109,9 +109,7 @@ public class Server {
 
         public void registerClient(Socket socket) {
             Client client = new Client(socket);
-            clients.put(client.id, client);
-            MainActivity.debugMsgToAppView(String.format("Registered client %d", client.id));
-            Log.i("server", String.format("Handler registered client %d", client.id));
+            newClientsQueue.add(new Pair<>(client.id, client));
         }
 
         public void postBroadcast(ServerMessage msg) {
@@ -128,6 +126,13 @@ public class Server {
             List<ClientMessage> inboundMessages;
             while (true) {
                 // TODO may want to add timeouts here;
+
+                while (!newClientsQueue.isEmpty()) {
+                    Pair<Integer, Client> p = newClientsQueue.remove();
+                    clients.put(p.first, p.second);
+                    MainActivity.debugMsgToAppView(String.format("Registered client %d", p.first));
+                    Log.i("server", String.format("Handler registered client %d", p.first));
+                }
 
                 while (!outboundMessageQueue.isEmpty()) {
                     Pair<Integer, ServerMessage> p = outboundMessageQueue.remove();
