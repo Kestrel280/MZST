@@ -11,6 +11,7 @@
 
 #define SERIAL_BAUDRATE 921600
 #define EEPROM_SIZE 512
+#define NOOP __asm__("nop\n\t");
 
 // Defined types
 typedef struct {
@@ -22,11 +23,17 @@ typedef struct {
 // Prototypes
 OutboundMessage createOutboundMessage(char type);
 void processIncomingMessage(String msg);
-void touchpadCallback(void* arg);
+void touchpadCallback(void* param);
 void sendMessage(OutboundMessage msg);
+void rfListen(void* param);
+void messageLoop(void* param);
 
 // Hardware constants
 const touch_pad_t TPPIN = TOUCH_PAD_NUM7;
+
+// Tasks
+TaskHandle_t messageLoopTask;
+TaskHandle_t rfListenerTask;
 
 // Message types
 const char MTYPE_TOUCHED  = 100;
@@ -92,32 +99,50 @@ void setup() {
   // Register interrupts for touchpad
   touch_pad_isr_register(touchpadCallback, NULL, TOUCH_PAD_INTR_MASK_ACTIVE);
   ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE));
+
+  Serial.printf("starting tasks\n");
+  // Start message loop on core 0
+  xTaskCreatePinnedToCore(
+    messageLoop,      /* Task function. */
+    "Message_Loop",   /* name of task. */
+    4096,             /* Stack size of task */
+    NULL,             /* parameter of the task */
+    0,                /* priority of the task */
+    &messageLoopTask, /* Task handle to keep track of created task */
+    0);               /* pin task to core 0 */
+  Serial.printf("started message loop\n");
+
+  // Start RF receiver on core 1
+  xTaskCreatePinnedToCore(
+    rfListen,         /* Task function. */
+    "RF_Listen",      /* name of task. */
+    4096,             /* Stack size of task */
+    NULL,             /* parameter of the task */
+    0,                /* priority of the task */
+    &rfListenerTask,  /* Task handle to keep track of created task */
+    1);               /* pin task to core 1 */
+  Serial.printf("started rf receiver\n");
+  sleep(2);
 }
 
 void loop() {
-  delay(250);
 
-  while(!outboundMessageQueue.empty()) {
-    OutboundMessage msg = outboundMessageQueue.front();
-    Serial.printf("Sending message to server with type: %d\n", msg.type);
-    sendMessage(msg);
-    outboundMessageQueue.pop();
-  }
-
-  while (socket.available() > 0) {
-    String line = socket.readStringUntil('\n');
-    processIncomingMessage(line);
-  }
 }
 
-/* Function definitions */
+/* ************************* */
+/*            ISRs           */
+/* ************************* */
 
-void touchpadCallback(void* arg) {
+void touchpadCallback(void* param) {
   if (!touched) {
     touched = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED));
   }
 }
+
+/* ************************* */
+/*    Messaging Functions    */
+/* ************************* */
 
 void processIncomingMessage(String msg) {
   Serial.printf("Received message from server: %s\n", msg.c_str());
@@ -138,4 +163,35 @@ OutboundMessage createOutboundMessage(char type) {
 
 void sendMessage(OutboundMessage msg) {
   socket.write_P((char*)(&msg), sizeof(OutboundMessage));
+}
+
+/* ************************* */
+/*           Tasks           */
+/* ************************* */
+
+void messageLoop(void* param) {
+  Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
+  
+  while (true) {
+    delay(50);
+
+    while(!outboundMessageQueue.empty()) {
+      OutboundMessage msg = outboundMessageQueue.front();
+      Serial.printf("Sending message to server with type: %d\n", msg.type);
+      sendMessage(msg);
+      outboundMessageQueue.pop();
+    }
+
+    while (socket.available() > 0) {
+      String line = socket.readStringUntil('\n');
+      processIncomingMessage(line);
+    }
+  }
+}
+
+void rfListen(void* param) {
+  Serial.printf("rfListen running on core %d\n", xPortGetCoreID());
+  while(true) {
+    NOOP;
+  }
 }
