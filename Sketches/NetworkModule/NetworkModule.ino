@@ -97,10 +97,6 @@ void setup() {
 void loop() {
   delay(250);
 
-  uint32_t dbg;
-  touch_pad_read_raw_data(TPPIN, &dbg);
-  Serial.println(dbg);
-
   while(!outboundMessageQueue.empty()) {
     OutboundMessage msg = outboundMessageQueue.front();
     Serial.printf("Sending message to server with type: %d\n", msg.type);
