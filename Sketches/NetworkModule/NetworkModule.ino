@@ -9,7 +9,7 @@
 #include "driver/touch_sensor_common.h"
 #include "hal/touch_sensor_types.h"
 
-#define SERIAL_BAUDRATE 115200
+#define SERIAL_BAUDRATE 921600
 #define EEPROM_SIZE 512
 
 // Defined types
@@ -26,8 +26,7 @@ void touchpadCallback(void* arg);
 void sendMessage(OutboundMessage msg);
 
 // Hardware constants
-const int CAPSENS_PIN = 33;
-const touch_pad_t TPPIN = TOUCH_PAD_NUM8;
+const touch_pad_t TPPIN = TOUCH_PAD_NUM7;
 
 // Message types
 const char MTYPE_TOUCHED  = 100;
@@ -56,14 +55,16 @@ void setup() {
   dumpEeprom();
 
   // Touchpad initialization
-  uint16_t tpBaseline;
-  uint16_t tpThresh;
+  uint32_t tpBaseline;
+  uint32_t tpThresh;
   ESP_ERROR_CHECK(touch_pad_init());
+  touch_pad_config(TPPIN);
+  touch_pad_set_voltage(TOUCH_PAD_HIGH_VOLTAGE_THRESHOLD, TOUCH_PAD_LOW_VOLTAGE_THRESHOLD, TOUCH_PAD_ATTEN_VOLTAGE_THRESHOLD);
   touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER);
-  touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V);
-  touch_pad_config(TPPIN, 0);
-  touch_pad_read(TPPIN, &tpBaseline);
-  tpThresh = tpBaseline * 2 / 3;
+  touch_pad_fsm_start();
+  sleep(1);
+  touch_pad_read_raw_data(TPPIN, &tpBaseline);
+  tpThresh = tpBaseline * 4 / 3;
   ESP_ERROR_CHECK(touch_pad_set_thresh(TPPIN, tpThresh));
   Serial.printf("Baseline tp val = %d; set threshold to %d\n", tpBaseline, tpThresh);
 
@@ -89,12 +90,16 @@ void setup() {
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
   // Register interrupts for touchpad
-  touch_pad_isr_register(touchpadCallback, NULL);
-  ESP_ERROR_CHECK(touch_pad_intr_enable());
+  touch_pad_isr_register(touchpadCallback, NULL, TOUCH_PAD_INTR_MASK_ACTIVE);
+  ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE));
 }
 
 void loop() {
   delay(250);
+
+  uint32_t dbg;
+  touch_pad_read_raw_data(TPPIN, &dbg);
+  Serial.println(dbg);
 
   while(!outboundMessageQueue.empty()) {
     OutboundMessage msg = outboundMessageQueue.front();

@@ -9,9 +9,10 @@ NetworkModule _SamHome = {
 };
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
   EEPROM.begin(EEPROM_SIZE);
   Serial.printf("Flashing EEPROM...\n");
+  Serial.println("asdf");
 
   /* ------------------------ */
   /* ------------------------ */
