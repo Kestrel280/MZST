@@ -107,12 +107,8 @@ void setup() {
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
-  // Register interrupts for touchpad
-  touch_pad_isr_register(touchpadCallback, NULL, TOUCH_PAD_INTR_MASK_ACTIVE);
-  ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE));
-
   Serial.printf("starting tasks\n");
-  // Start message loop on core 0
+  // Start message loop on core 1
   xTaskCreatePinnedToCore(
     messageLoop,      /* Task function. */
     "Message_Loop",   /* name of task. */
@@ -120,10 +116,10 @@ void setup() {
     NULL,             /* parameter of the task */
     1,                /* priority of the task */
     &messageLoopTask, /* Task handle to keep track of created task */
-    1);               /* pin task to core 0 */
+    1);               /* pin task to core 1 */
   Serial.printf("started message loop\n");
 
-  // Start RF receiver on core 1
+  // Start RF receiver on core 0
   xTaskCreatePinnedToCore(
     rfListen,         /* Task function. */
     "RF_Listen",      /* name of task. */
@@ -131,7 +127,7 @@ void setup() {
     NULL,             /* parameter of the task */
     1,                /* priority of the task */
     &rfListenerTask,  /* Task handle to keep track of created task */
-    0);               /* pin task to core 1 */
+    0);               /* pin task to core 0 */
   Serial.printf("started rf receiver\n");
   sleep(2);
 }
@@ -200,6 +196,10 @@ void sendMessage(OutboundMessage msg) {
 void messageLoop(void* param) {
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
   
+  // Register interrupts for touchpad
+  touch_pad_isr_register(touchpadCallback, NULL, TOUCH_PAD_INTR_MASK_ACTIVE);
+  ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE));
+
   while (true) {
     while(!outboundMessageQueue.empty()) {
       OutboundMessage msg = outboundMessageQueue.front();
