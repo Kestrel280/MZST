@@ -3,6 +3,7 @@
 #include <WiFi.h>
 #include "../_include/NetworkModule.h"
 #include "../_include/Eeprom_Helpers.h"
+#include "../_include/TimerSyncModule.h"
 
 #include "soc/touch_sensor_channel.h"
 #include "driver/touch_sensor.h"
@@ -17,7 +18,7 @@
 typedef struct {
     short type;
     short id;
-    unsigned long timestamp;
+    unsigned long ts;
 } OutboundMessage;
 
 // Prototypes
@@ -30,18 +31,22 @@ void messageLoop(void* param);
 
 // Hardware constants
 const touch_pad_t TPPIN = TOUCH_PAD_NUM7;
+const int rfReceivePin = D9;
+const int speakerPin = D0;
 
 // Tasks
 TaskHandle_t messageLoopTask;
 TaskHandle_t rfListenerTask;
 
 // Message types
-const char MTYPE_TOUCHED  = 100;
-const char MTYPE_ERROR    = 33;
+const char MTYPE_TOUCHED        = 100;
+const char MTYPE_ERROR          = 33;
+const char MTYPE_TIMESTAMPRESET = 66;
 
 // State globals
 unsigned short id = 2;
 bool touched = false;
+unsigned long timestampLastReset = 0; 
 
 // Other globals
 NetworkModule module;
@@ -53,9 +58,11 @@ const char* HOST = "192.168.1.109";
 const uint16_t PORT = 5000;
 
 void setup() {
+
   // Setup
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
+  pinMode(rfReceivePin, INPUT);
   sleep(2);
   Serial.printf("--- initialized ---\n");
   Serial.printf("  PACKET SIZE: %d\n", sizeof(OutboundMessage));
@@ -109,7 +116,7 @@ void setup() {
     NULL,             /* parameter of the task */
     0,                /* priority of the task */
     &messageLoopTask, /* Task handle to keep track of created task */
-    0);               /* pin task to core 0 */
+    1);               /* pin task to core 0 */
   Serial.printf("started message loop\n");
 
   // Start RF receiver on core 1
@@ -120,13 +127,30 @@ void setup() {
     NULL,             /* parameter of the task */
     0,                /* priority of the task */
     &rfListenerTask,  /* Task handle to keep track of created task */
-    1);               /* pin task to core 1 */
+    0);               /* pin task to core 1 */
   Serial.printf("started rf receiver\n");
   sleep(2);
 }
 
 void loop() {
+  digitalWrite(speakerPin, LOW);
+}
 
+/* ************************* */
+/*     TimeSync Functions    */
+/* ************************* */
+
+bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, int allowableMisses = 0) {
+  int misses = 0;
+  for (int i = 0; i < length; i++) {
+    if (buffer[(startIdx + i) % length] != key[i]) {
+      misses++;
+    }
+
+    if (misses > allowableMisses) { return false; }
+  } // End for loop
+
+  return true;
 }
 
 /* ************************* */
@@ -157,7 +181,7 @@ OutboundMessage createOutboundMessage(char type) {
   OutboundMessage msg;
   msg.type = type;
   msg.id = id;
-  msg.timestamp = millis();
+  msg.ts = millis() - timestampLastReset;
   return msg;
 }
 
@@ -191,7 +215,29 @@ void messageLoop(void* param) {
 
 void rfListen(void* param) {
   Serial.printf("rfListen running on core %d\n", xPortGetCoreID());
+
+  int buffer[rfKeyLength]; // Circular buffer to receive incoming signals
+  int bufferIdx;
+  int j;
+  for (j = 0; j < rfKeyLength; j++) {
+    buffer[j] = -1;
+  }
+  
   while(true) {
-    NOOP;
+    buffer[bufferIdx] = digitalRead(rfReceivePin);
+    //Serial.printf("%d", buffer[bufferIdx]);
+    
+    // Check if buffer, starting from NEXT value, matches the key
+    // If it does, reset timestamp and send a timestamp-reset message to server
+    // note: buffer overflows are checked in circularBufferMatchesKey(), don't need to check here
+    if (circularBufferMatchesKey(buffer, rfKey, bufferIdx + 1, rfKeyLength, rfKeyAllowableMisses)) {
+      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET));
+      timestampLastReset = millis();
+      Serial.printf("Received timestamp-reset key\n");
+    }
+
+    bufferIdx = (bufferIdx + 1) % rfKeyLength;
+    //if (!bufferIdx) { Serial.printf("\n"); }
+    delayMicroseconds(rfPulseIntervalUs); // TODO use proper delay timing
   }
 }

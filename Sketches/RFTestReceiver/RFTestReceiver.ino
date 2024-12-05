@@ -1,46 +1,46 @@
-const int receivePin = 26;
-const int pulseSequence[] = {1, 0, 1, 0, 1, 0, 1, 1, 0, 0}; // pulse pattern
-const int pulseDelay = 1000; // width of pulse in microseconds
-const int sequenceLength = sizeof(pulseSequence) / sizeof(pulseSequence[0]); // length of the pulse array
-const float matchThreshold = .9; // Minimum percentage of matches required (e.g., .8 = 80%)
+#include "../_include/TimerSyncModule.h"
+
+const int rfReceivePin = 26;
+
+bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, int allowableMisses = 0) {
+  int misses = 0;
+  for (int i = 0; i < length; i++) {
+    if (buffer[(startIdx + i) % length] != key[i]) {
+      misses++;
+    }
+
+    if (misses > allowableMisses) { return false; }
+  } // End for loop
+
+  return true;
+}
 
 void setup() {
-  pinMode(receivePin, INPUT);
+  pinMode(rfReceivePin, INPUT);
   Serial.begin(115200); // Initialize serial communication for debugging
 }
 
 void loop() {
-  // Wait for a HIGH signal to start
-  while (digitalRead(receivePin) == LOW) {
-    // Stay in this loop until a HIGH signal is detected
-  }
-
-  delayMicroseconds((int)pulseDelay/2); // Small delay so we're in the "middle" of the pulse
-
-  // Now read the pulse sequence
-  int receivedSequence[sequenceLength];
-  for (int i = 0; i < sequenceLength; i++) {
-    receivedSequence[i] = digitalRead(receivePin); // Read the pin state
-    delayMicroseconds(pulseDelay); // Wait for the expected pulse timing
-    Serial.print(receivedSequence[i]);
-    Serial.print(", ");
-  }
-
-  // Compare received sequence with the expected sequence
-  int matchCount = 0;
-  for (int i = 0; i < sequenceLength; i++) {
-    if (receivedSequence[i] == pulseSequence[i]) {
-      matchCount++; // Count how many values match
+  int buffer[rfKeyLength]; // Circular buffer to receive incoming signals
+    int bufferIdx;
+    int j;
+    for (j = 0; j < rfKeyLength; j++) {
+      buffer[j] = -1;
     }
-  }
+    
+    while(true) {
+      buffer[bufferIdx] = digitalRead(rfReceivePin);
+      Serial.printf("%d", buffer[bufferIdx]);
+      
+      // Check if buffer, starting from NEXT value, matches the key
+      // If it does, reset timestamp and send a timestamp-reset message to server
+      // note: buffer overflows are checked in circularBufferMatchesKey(), don't need to check here
+      if (circularBufferMatchesKey(buffer, rfKey, bufferIdx + 1, rfKeyLength, rfKeyAllowableMisses)) {
+        Serial.printf("Received matching sequence\n");
+      }
 
-  // Calculate the percentage of matches
-  float matchPercentage = (float)matchCount/sequenceLength;
-
-  // Check if the match percentage meets the threshold
-  if (matchPercentage >= matchThreshold) {
-    Serial.println("Sequence matched!");
-  } else {
-    Serial.println("No dice, cowboy!");
-  }
+      bufferIdx = (bufferIdx + 1) % rfKeyLength;
+      if (!bufferIdx) { Serial.printf("\n"); }
+      delayMicroseconds(rfPulseIntervalUs); // TODO use proper delay timing
+    }
 }
