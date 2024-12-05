@@ -9,6 +9,6 @@ const int rfKeyLength = sizeof(rfKey) / sizeof(rfKey[0]);
 
 const int rfPulseIntervalUs = 100000; // Microseconds
 
-const int rfKeyAllowableMisses = 4; // 
+const int rfKeyAllowableMisses = 8; // 
 
 #endif

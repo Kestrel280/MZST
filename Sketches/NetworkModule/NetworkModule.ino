@@ -5,6 +5,7 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
+#include <esp_task_wdt.h>
 #include "soc/touch_sensor_channel.h"
 #include "driver/touch_sensor.h"
 #include "driver/touch_sensor_common.h"
@@ -58,6 +59,9 @@ const char* HOST = "192.168.1.109";
 const uint16_t PORT = 5000;
 
 void setup() {
+
+  // Disable RTOS watchdog; we are assigning exactly 1 thread to each core and they don't yield on purpose
+  esp_task_wdt_deinit();
 
   // Setup
   Serial.begin(SERIAL_BAUDRATE);
@@ -114,7 +118,7 @@ void setup() {
     "Message_Loop",   /* name of task. */
     4096,             /* Stack size of task */
     NULL,             /* parameter of the task */
-    0,                /* priority of the task */
+    1,                /* priority of the task */
     &messageLoopTask, /* Task handle to keep track of created task */
     1);               /* pin task to core 0 */
   Serial.printf("started message loop\n");
@@ -125,7 +129,7 @@ void setup() {
     "RF_Listen",      /* name of task. */
     4096,             /* Stack size of task */
     NULL,             /* parameter of the task */
-    0,                /* priority of the task */
+    1,                /* priority of the task */
     &rfListenerTask,  /* Task handle to keep track of created task */
     0);               /* pin task to core 1 */
   Serial.printf("started rf receiver\n");
@@ -133,7 +137,7 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(speakerPin, LOW);
+
 }
 
 /* ************************* */
@@ -197,8 +201,6 @@ void messageLoop(void* param) {
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
   
   while (true) {
-    delay(50);
-
     while(!outboundMessageQueue.empty()) {
       OutboundMessage msg = outboundMessageQueue.front();
       Serial.printf("Sending message to server with type: %d\n", msg.type);
@@ -210,6 +212,8 @@ void messageLoop(void* param) {
       String line = socket.readStringUntil('\n');
       processIncomingMessage(line);
     }
+    
+    delay(50);
   }
 }
 
