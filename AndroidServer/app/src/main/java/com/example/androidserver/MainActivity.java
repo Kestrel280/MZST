@@ -50,11 +50,11 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case "send":
                 msg = new ServerMessage(stringInput);
-                server.clientHandler.postMsg(numberInput, msg);
+                server.nodeHandler.postMsg(numberInput, msg);
                 break;
             case "broadcast":
                 msg = new ServerMessage(stringInput);
-                server.clientHandler.postBroadcast(msg);
+                server.nodeHandler.postBroadcast(msg);
                 break;
         }
         if (action != null) {

@@ -8,10 +8,15 @@ import java.nio.charset.Charset;
 public class ClientMessage {
     public static final int PacketSize = 8;
 
-    public static final byte TRIGGERED  = 100;
-    public static final byte ERROR      = 33;
+    public static final byte MTYPE_REGISTER_USER = 1;
+    public static final byte MTYPE_REGISTER_NODE = 2;
+    public static final byte MTYPE_REGISTER_TRANSMITTER = 3;
 
-    public short type;
+    public static final byte MTYPE_TRIGGER = 100;
+    public static final byte MTYPE_TIMESTAMPRESET = 66;
+    public static final byte MTYPE_ERROR = 33;
+
+    public short code;
     public short id;
     public long timestamp;
 
@@ -20,7 +25,7 @@ public class ClientMessage {
         ByteBuffer bb = Charset.forName("ASCII").encode(CharBuffer.wrap(raw));
         bb.order(ByteOrder.LITTLE_ENDIAN);
 
-        this.type = bb.getShort(0);
+        this.code = bb.getShort(0);
         this.id = bb.getShort(2);
         this.timestamp = bb.getInt(4); // TODO Something wrong here, probably related to sign
     }

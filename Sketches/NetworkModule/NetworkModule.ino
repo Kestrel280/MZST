@@ -36,6 +36,7 @@ TaskHandle_t messageLoopTask;
 TaskHandle_t rfListenerTask;
 
 // Message types
+const char MTYPE_REGISTER       = 2;
 const char MTYPE_TOUCHED        = 100;
 const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
@@ -87,6 +88,8 @@ void setup() {
     delay(50);
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
+
+  sendMessage(createOutboundMessage(MTYPE_REGISTER));
 
   Serial.printf("starting tasks\n");
 

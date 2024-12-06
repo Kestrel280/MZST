@@ -12,13 +12,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Client {
+    public static final int USER = 1;
+    public static final int NODE = 2;
+    public static final int TRANSMITTER = 3;
+
+    public int type;
     private static int __debug_id = 0;
     public int id;
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
 
+
     Client(Socket socket) {
+        this(socket, -1);
+    }
+    Client(Socket socket, int type) {
         try {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
@@ -26,6 +35,11 @@ public class Client {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        this.type = type;
+    }
+
+    public void setType(int newType) {
+        this.type = newType;
     }
 
     public ClientMessage readMessage() {
@@ -35,8 +49,8 @@ public class Client {
             if (reader.ready()) {
                 reader.read(line, 0, ClientMessage.PacketSize);
                 msg = new ClientMessage(line);
-                Log.i("server", String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
-                MainActivity.debugMsgToAppView(String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
+                Log.i("server", String.format("Received msg from client %d of type %d: code=%d, id=%d, ts=%dms", this.id, this.type, msg.code, msg.id, msg.timestamp));
+                MainActivity.debugMsgToAppView(String.format("Received msg from client %d of type %d: code=%d, id=%d, ts=%dms", this.id, this.type, msg.code, msg.id, msg.timestamp));
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -59,7 +73,7 @@ public class Client {
 
     public void sendMessage(ServerMessage msg) {
         if (!msg.text.isEmpty()) {
-            Log.i("server", String.format("Sending message to client %d: %s", id, msg.text));
+            Log.i("server", String.format("Sending message to client %d of type %d: %s", this.id, this.type, msg.text));
             writer.println(msg.text);
         }
     }

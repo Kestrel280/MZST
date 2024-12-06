@@ -26,7 +26,9 @@ public class Server {
     private ActionHandler actionHandler;
 
     protected ServerSocket  serverSocket = null;
-    protected ClientHandler clientHandler;
+    protected ClientHandler userHandler;
+    protected ClientHandler nodeHandler;
+    protected ClientHandler transmitterHandler;
     protected ConnectionListener connectionListener;
 
     public ServerState getState() {
@@ -46,7 +48,9 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new Thread( () -> {
             try {
                 serverSocket.close();
-                clientHandler.shutdown();
+                userHandler.shutdown();
+                nodeHandler.shutdown();
+                transmitterHandler.shutdown();
                 connectionListener.shutdown();
                 Log.i("server", "Server shutdown hook");
             } catch (IOException e) {
@@ -62,11 +66,18 @@ public class Server {
             serverSocket = new ServerSocket(port);
             Log.i("server", String.format("(Server) Server started at %s:%d", getLocalIpAddress(), PORT));
 
-            clientHandler = new ClientHandler();
-            Thread handlerThread = new Thread(clientHandler);
-            handlerThread.start();
+            userHandler = new ClientHandler("userHandler");
+            nodeHandler = new ClientHandler("nodeHandler");
+            transmitterHandler = new ClientHandler("transmitterHandler");
 
-            connectionListener = new ConnectionListener(serverSocket, clientHandler);
+            Thread userHandlerThread = new Thread(userHandler);
+            Thread nodeHandlerThread = new Thread(nodeHandler);
+            Thread transmitterHandlerThread = new Thread(transmitterHandler);
+            userHandlerThread.start();
+            nodeHandlerThread.start();
+            transmitterHandlerThread.start();
+
+            connectionListener = new ConnectionListener(serverSocket, userHandler, nodeHandler, transmitterHandler);
             Thread listenerThread = new Thread(connectionListener);
             listenerThread.start();
         } catch (IOException i) {
@@ -76,8 +87,8 @@ public class Server {
 
     private class ConnectionListener implements Runnable {
         protected Socket socket;
-        ConnectionListener(ServerSocket serverSocket, ClientHandler clientHandler) {
-            Log.i("server", "Listener started");
+        ConnectionListener(ServerSocket serverSocket, ClientHandler userHandler, ClientHandler nodeHandler, ClientHandler transmitterHandler) {
+            Log.i("server", "ConnectionListener started");
         }
 
         public void shutdown() {}
@@ -85,11 +96,24 @@ public class Server {
         @Override
         public void run() {
             while (true) {
-                Log.i("server", "Listener waiting for client...");
+                Log.i("server", "ConnectionListener waiting for clients...");
                 try {
+                    ClientMessage registrationMessage = null;
                     socket = serverSocket.accept();
                     Client client = new Client(socket);
-                    clientHandler.registerClient(client);
+                    while (registrationMessage == null) {
+                        registrationMessage = client.readMessage();
+                    }
+
+                    switch (registrationMessage.code) {
+                        case ClientMessage.MTYPE_REGISTER_USER: client.setType(Client.USER); userHandler.registerClient(client); break;
+                        case ClientMessage.MTYPE_REGISTER_NODE: client.setType(Client.NODE); nodeHandler.registerClient(client); break;
+                        case ClientMessage.MTYPE_REGISTER_TRANSMITTER: client.setType(Client.TRANSMITTER); transmitterHandler.registerClient(client); break;
+                        default: {
+                            Log.i("server", "Received invalid registration message type %d; rejecting connection");
+                            socket.close();
+                        }
+                    }
                 } catch (IOException e) {
                     Log.d("server", e.toString());
                 }
@@ -98,12 +122,15 @@ public class Server {
     }
 
     public class ClientHandler implements Runnable {
+        public String name;
         public HashMap<Integer, Client> clients = new HashMap<>();
         Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
         Queue<ServerMessage> outboundBroadcastQueue = new ArrayDeque<>();
         Queue<Pair<Integer, Client>> newClientsQueue = new ArrayDeque<>();
-        ClientHandler() {
-            Log.i("server", "Handler started");
+
+        ClientHandler(String handlerName) {
+            Log.i("server", "ClientHandler " + handlerName + " started");
+            this.name = handlerName;
         }
 
         public void shutdown() {}
@@ -116,8 +143,8 @@ public class Server {
             outboundBroadcastQueue.add(msg);
         }
 
-        public void postMsg(int nodeId, ServerMessage msg) {
-            outboundMessageQueue.add(new Pair<>(nodeId, msg));
+        public void postMsg(int clientId, ServerMessage msg) {
+            outboundMessageQueue.add(new Pair<>(clientId, msg));
         }
 
         @Override
@@ -130,8 +157,8 @@ public class Server {
                 while (!newClientsQueue.isEmpty()) {
                     Pair<Integer, Client> p = newClientsQueue.remove();
                     clients.put(p.first, p.second);
-                    MainActivity.debugMsgToAppView(String.format("Registered client %d", p.first));
-                    Log.i("server", String.format("Handler registered client %d", p.first));
+                    MainActivity.debugMsgToAppView(String.format("%s registered client %d", this.name, p.first));
+                    Log.i("server", String.format("%s registered client %d", this.name, p.first));
                 }
 
                 while (!outboundMessageQueue.isEmpty()) {
@@ -163,8 +190,8 @@ public class Server {
     private ServerMessage processMessage(ClientMessage cMsg) {
         ServerMessage response = new ServerMessage("ACK");
 
-        switch (cMsg.type) {
-            case ClientMessage.TRIGGERED: {
+        switch (cMsg.code) {
+            case ClientMessage.MTYPE_TRIGGER: {
                 actionHandler.processAction(
                         new ServerAction(ActionType.TRIGGER)
                                 .setClientId(cMsg.id)
