@@ -28,18 +28,28 @@ public class Client {
         }
     }
 
-    public List<ClientMessage> readMessageQueue() {
+    public ClientMessage readMessage() {
         char[] line = new char[ClientMessage.PacketSize];
-        ClientMessage msg;
+        ClientMessage msg = null;
+        try {
+            if (reader.ready()) {
+                reader.read(line, 0, ClientMessage.PacketSize);
+                msg = new ClientMessage(line);
+                Log.i("server", String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
+                MainActivity.debugMsgToAppView(String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return msg;
+    }
+
+    public List<ClientMessage> readMessageQueue() {
         List<ClientMessage> messages = new ArrayList<>();
 
         try {
             while (reader.ready())  {
-                reader.read(line, 0, ClientMessage.PacketSize);
-                msg = new ClientMessage(line);
-                messages.add(msg);
-                Log.i("server", String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
-                MainActivity.debugMsgToAppView(String.format("Received msg: type=%d, id=%d, ts=%dms", msg.type, msg.id, msg.timestamp));
+                messages.add(this.readMessage());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

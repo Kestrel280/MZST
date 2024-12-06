@@ -88,7 +88,8 @@ public class Server {
                 Log.i("server", "Listener waiting for client...");
                 try {
                     socket = serverSocket.accept();
-                    clientHandler.registerClient(socket);
+                    Client client = new Client(socket);
+                    clientHandler.registerClient(client);
                 } catch (IOException e) {
                     Log.d("server", e.toString());
                 }
@@ -107,8 +108,7 @@ public class Server {
 
         public void shutdown() {}
 
-        public void registerClient(Socket socket) {
-            Client client = new Client(socket);
+        public void registerClient(Client client) {
             newClientsQueue.add(new Pair<>(client.id, client));
         }
 
