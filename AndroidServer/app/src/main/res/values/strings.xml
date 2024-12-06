@@ -5,6 +5,9 @@
     <string name="debugBtnSaveText">SAVE</string>
     <string name="debugBtnResetText">RESET</string>
     <string name="debugBtnSendText">Send</string>
+    <string name="debugRadioUsersText">Users</string>
+    <string name="debugRadioNodesText">Nodes</string>
+    <string name="debugRadioTransmittersText">Transmitters</string>
     <string name="debugBtnBroadcastText">Broadcast</string>
     <string name="debugNumberInputHint">ID</string>
     <string name="debugStringInputHint">Outbound message</string>

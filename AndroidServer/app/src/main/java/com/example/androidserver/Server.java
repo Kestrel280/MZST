@@ -26,9 +26,9 @@ public class Server {
     private ActionHandler actionHandler;
 
     protected ServerSocket  serverSocket = null;
-    protected ClientHandler userHandler;
-    protected ClientHandler nodeHandler;
-    protected ClientHandler transmitterHandler;
+    public ClientHandler userHandler;
+    public ClientHandler nodeHandler;
+    public ClientHandler transmitterHandler;
     protected ConnectionListener connectionListener;
 
     public ServerState getState() {

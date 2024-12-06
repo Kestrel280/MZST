@@ -114,4 +114,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/debugNumberInput" />
 
+    <RadioGroup
+        android:id="@+id/debugRadioGrp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@+id/debugBtnBroadcast"
+        app:layout_constraintTop_toBottomOf="@+id/debugBtnReset">
+
+        <RadioButton
+            android:id="@+id/dbgRadioUsers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:tag="users"
+            android:text="@string/debugRadioUsersText" />
+
+        <RadioButton
+            android:id="@+id/dbgRadioNodes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:tag="nodes"
+            android:text="@string/debugRadioNodesText" />
+
+        <RadioButton
+            android:id="@+id/dbgRadioTransmitters"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:tag="transmitters"
+            android:text="@string/debugRadioTransmittersText" />
+    </RadioGroup>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
