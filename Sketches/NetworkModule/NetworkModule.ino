@@ -5,11 +5,7 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
-#include <esp_task_wdt.h>
-#include "soc/touch_sensor_channel.h"
-#include "driver/touch_sensor.h"
-#include "driver/touch_sensor_common.h"
-#include "hal/touch_sensor_types.h"
+#include "esp32-hal-touch.h"
 
 #define SERIAL_BAUDRATE 921600
 #define EEPROM_SIZE 512
@@ -60,9 +56,6 @@ const uint16_t PORT = 5000;
 
 void setup() {
 
-  // Disable RTOS watchdog; we are assigning exactly 1 thread to each core and they don't yield on purpose
-  esp_task_wdt_deinit();
-
   // Setup
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
@@ -72,19 +65,7 @@ void setup() {
   Serial.printf("  PACKET SIZE: %d\n", sizeof(OutboundMessage));
   dumpEeprom();
 
-  // Touchpad initialization
-  uint32_t tpBaseline;
-  uint32_t tpThresh;
-  ESP_ERROR_CHECK(touch_pad_init());
-  touch_pad_config(TPPIN);
-  touch_pad_set_voltage(TOUCH_PAD_HIGH_VOLTAGE_THRESHOLD, TOUCH_PAD_LOW_VOLTAGE_THRESHOLD, TOUCH_PAD_ATTEN_VOLTAGE_THRESHOLD);
-  touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER);
-  touch_pad_fsm_start();
   sleep(1);
-  touch_pad_read_raw_data(TPPIN, &tpBaseline);
-  tpThresh = tpBaseline * 4 / 3;
-  ESP_ERROR_CHECK(touch_pad_set_thresh(TPPIN, tpThresh));
-  Serial.printf("Baseline tp val = %d; set threshold to %d\n", tpBaseline, tpThresh);
 
   // Load wifi network info
   readEeprom((char*)&module, 0, sizeof(NetworkModule));
@@ -108,26 +89,28 @@ void setup() {
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
   Serial.printf("starting tasks\n");
-  // Start message loop on core 1
+
+  // Start message loop on core 0
   xTaskCreatePinnedToCore(
     messageLoop,      /* Task function. */
     "Message_Loop",   /* name of task. */
-    4096,             /* Stack size of task */
+    16384,            /* Stack size of task */
     NULL,             /* parameter of the task */
-    1,                /* priority of the task */
+    0,                /* priority of the task */
     &messageLoopTask, /* Task handle to keep track of created task */
-    1);               /* pin task to core 1 */
+    0);               /* pin task to core 0 */
   Serial.printf("started message loop\n");
 
-  // Start RF receiver on core 0
+
+  // Start RF receiver on core 1
   xTaskCreatePinnedToCore(
     rfListen,         /* Task function. */
     "RF_Listen",      /* name of task. */
     4096,             /* Stack size of task */
     NULL,             /* parameter of the task */
-    1,                /* priority of the task */
+    0,                /* priority of the task */
     &rfListenerTask,  /* Task handle to keep track of created task */
-    0);               /* pin task to core 0 */
+    1);               /* pin task to core 1 */
   Serial.printf("started rf receiver\n");
   sleep(2);
 }
@@ -157,7 +140,7 @@ bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, i
 /*            ISRs           */
 /* ************************* */
 
-void touchpadCallback(void* param) {
+void touchpadCallback() {
   if (!touched) {
     touched = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED));
@@ -194,11 +177,13 @@ void sendMessage(OutboundMessage msg) {
 /* ************************* */
 
 void messageLoop(void* param) {
+
+  touch_value_t _touchVal;
+  _touchVal = touchRead(TPPIN);
+  touchAttachInterrupt(TPPIN, &touchpadCallback, _touchVal * 6 / 5);
+  Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal * 8 / 7);
+
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
-  
-  // Register interrupts for touchpad
-  touch_pad_isr_register(touchpadCallback, NULL, TOUCH_PAD_INTR_MASK_ACTIVE);
-  ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE));
 
   while (true) {
     while(!outboundMessageQueue.empty()) {
@@ -213,7 +198,7 @@ void messageLoop(void* param) {
       processIncomingMessage(line);
     }
     
-    delay(50);
+    delay(250);
   }
 }
 
@@ -228,8 +213,8 @@ void rfListen(void* param) {
   }
   
   while(true) {
+
     buffer[bufferIdx] = digitalRead(rfReceivePin);
-    //Serial.printf("%d", buffer[bufferIdx]);
     
     // Check if buffer, starting from NEXT value, matches the key
     // If it does, reset timestamp and send a timestamp-reset message to server
@@ -241,7 +226,10 @@ void rfListen(void* param) {
     }
 
     bufferIdx = (bufferIdx + 1) % rfKeyLength;
+
+    //Serial.printf("%d", buffer[bufferIdx]);
     //if (!bufferIdx) { Serial.printf("\n"); }
-    delayMicroseconds(rfPulseIntervalUs); // TODO use proper delay timing
+
+    delay(rfPulseIntervalMs);
   }
 }
