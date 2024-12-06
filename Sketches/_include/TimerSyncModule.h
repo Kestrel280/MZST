@@ -1,14 +1,10 @@
 #ifndef TIMERSYNCMODULE_H
 #define TIMERSYNCMODULE_H
 
-int rfKey[] = {
-	1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1
-};
-
-const int rfKeyLength = sizeof(rfKey) / sizeof(rfKey[0]);
+const unsigned int rfKey = 0b10101011001100101111110001011010;
 
 const int rfPulseIntervalMs = 3; // Milliseconds
 
-const int rfKeyAllowableMisses = 8; // 
+const int rfKeyRequiredMatches = 24; // 
 
 #endif

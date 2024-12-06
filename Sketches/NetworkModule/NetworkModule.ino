@@ -124,7 +124,7 @@ void setup() {
   xTaskCreatePinnedToCore(
     rfListen,         /* Task function. */
     "RF_Listen",      /* name of task. */
-    4096,             /* Stack size of task */
+    16384,            /* Stack size of task */
     NULL,             /* parameter of the task */
     0,                /* priority of the task */
     &rfListenerTask,  /* Task handle to keep track of created task */
@@ -135,12 +135,21 @@ void setup() {
 }
 
 void loop() {
-
+  vTaskDelay(250);
 }
 
 /* ************************* */
 /*     TimeSync Functions    */
 /* ************************* */
+
+int countSetBits(int inp) {
+  int count = 0;
+  while (inp) {
+    inp = inp & (inp - 1);
+    count++;
+  }
+  return count;
+}
 
 bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, int allowableMisses = 0) {
   int misses = 0;
@@ -225,28 +234,38 @@ void messageLoop(void* param) {
 void rfListen(void* param) {
   Serial.printf("rfListen running on core %d\n", xPortGetCoreID());
 
-  int buffer[rfKeyLength]; // Circular buffer to receive incoming signals
-  int bufferIdx;
-  int j;
-  for (j = 0; j < rfKeyLength; j++) {
-    buffer[j] = -1;
-  }
+  unsigned int buf = 0b0; // Bit buffer received on the RF pin. Left boundary is old, right boundary is new
+  int matchedBits;
+
+  unsigned int debugMask;
   
   while(true) {
 
-    buffer[bufferIdx] = digitalRead(rfReceivePin);
     digitalWrite(speakerPin, HIGH);
+
+    // Flush the oldest value and create a slot for the new value
+    buf = buf << 1;
+
+    // Read the pin and store it as the final bit
+    //  (value of digitalRead is either 0 or 1, so a plain OR will stick it at the right boundary)
+    buf = buf | digitalRead(rfReceivePin);
+
+    // Debug: print the buf
+    //debugMask = 0b10000000000000000000000000000000;
+    //for (int i = 0; i < 32; i++) {
+    //  Serial.printf("%d", (buf & debugMask) > 0);
+    //  debugMask = debugMask >> 1;
+    //}
     
-    // Check if buffer, starting from NEXT value, matches the key
-    // If it does, reset timestamp and send a timestamp-reset message to server
-    // note: buffer overflows are checked in circularBufferMatchesKey(), don't need to check here
-    if (circularBufferMatchesKey(buffer, rfKey, bufferIdx + 1, rfKeyLength, rfKeyAllowableMisses)) {
+    int matchedBits = countSetBits(~(buf ^ rfKey));
+    //Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
+    //Serial.printf("\n");
+    // Check if buffer matches the key to acceptable tolerance
+    if (matchedBits >= rfKeyRequiredMatches ) {
       outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET));
       timestampLastReset = millis();
-      Serial.printf("Received timestamp-reset key\n");
-    }
-
-    bufferIdx = (bufferIdx + 1) % rfKeyLength;
+      Serial.printf("Received timestamp-reset key (%d / %d matched bits, %d required) \n", matchedBits, 32, rfKeyRequiredMatches);
+    };
 
     //Serial.printf("%d", buffer[bufferIdx]);
     //if (!bufferIdx) { Serial.printf("\n"); }
