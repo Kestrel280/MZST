@@ -238,7 +238,7 @@ void rfListen(void* param) {
   int matchedBits;
 
   unsigned int debugMask;
-  
+
   while(true) {
 
     digitalWrite(speakerPin, HIGH);
@@ -249,6 +249,7 @@ void rfListen(void* param) {
     // Read the pin and store it as the final bit
     //  (value of digitalRead is either 0 or 1, so a plain OR will stick it at the right boundary)
     buf = buf | digitalRead(rfReceivePin);
+    matchedBits = countSetBits(~(buf ^ rfKey));
 
     // Debug: print the buf
     //debugMask = 0b10000000000000000000000000000000;
@@ -256,19 +257,15 @@ void rfListen(void* param) {
     //  Serial.printf("%d", (buf & debugMask) > 0);
     //  debugMask = debugMask >> 1;
     //}
-    
-    int matchedBits = countSetBits(~(buf ^ rfKey));
     //Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
     //Serial.printf("\n");
+    
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
       outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET));
       timestampLastReset = millis();
       Serial.printf("Received timestamp-reset key (%d / %d matched bits, %d required) \n", matchedBits, 32, rfKeyRequiredMatches);
     };
-
-    //Serial.printf("%d", buffer[bufferIdx]);
-    //if (!bufferIdx) { Serial.printf("\n"); }
 
     delay(rfPulseIntervalMs);
   }
