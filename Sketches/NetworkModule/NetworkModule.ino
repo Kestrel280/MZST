@@ -27,9 +27,12 @@ void rfListen(void* param);
 void messageLoop(void* param);
 
 // Hardware constants
-const touch_pad_t TPPIN = TOUCH_PAD_NUM7;
+const touch_pad_t tpPin = TOUCH_PAD_NUM7;
 const int rfReceivePin = D9;
 const int speakerPin = D0;
+const int ledRedPin = D2;
+const int ledGreenPin = D3;
+const int ledBluePin = D1;
 
 // Tasks
 TaskHandle_t messageLoopTask;
@@ -61,6 +64,12 @@ void setup() {
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
   pinMode(rfReceivePin, INPUT);
+  pinMode(speakerPin, OUTPUT);
+  ledcAttach(ledRedPin, 5000, 8);
+  ledcAttach(ledGreenPin, 5000, 8);
+  ledcAttach(ledBluePin, 5000, 8);
+  writeLed(255, 0, 0);
+  digitalWrite(speakerPin, HIGH);
   sleep(2);
   Serial.printf("--- initialized ---\n");
   Serial.printf("  PACKET SIZE: %d\n", sizeof(OutboundMessage));
@@ -73,6 +82,8 @@ void setup() {
   Serial.printf("Read SSID from EEPROM: %s\n", module.networkSsid);
   Serial.printf("Read Password from EEPROM: %s\n", module.networkPassword);
 
+  writeLed(255, 0, 0);
+
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
   while (WiFi.status() != WL_CONNECTED) {
@@ -81,6 +92,8 @@ void setup() {
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString());
 
+  writeLed(0, 0, 255);
+
   // Connect to socket
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
   while(!socket.connect(HOST, PORT)) {
@@ -88,6 +101,8 @@ void setup() {
     delay(50);
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
+
+  writeLed(0, 255, 0);
 
   sendMessage(createOutboundMessage(MTYPE_REGISTER));
 
@@ -116,6 +131,7 @@ void setup() {
     1);               /* pin task to core 1 */
   Serial.printf("started rf receiver\n");
   sleep(2);
+  writeLed(255, 30, 0);
 }
 
 void loop() {
@@ -147,6 +163,7 @@ void touchpadCallback() {
   if (!touched) {
     touched = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED));
+    writeLed(255, 255, 255);
   }
 }
 
@@ -160,6 +177,7 @@ void processIncomingMessage(String msg) {
 
   if (msg == "RESET") {
     touched = false;
+    writeLed(255, 35, 0);
   }
 }
 
@@ -180,10 +198,9 @@ void sendMessage(OutboundMessage msg) {
 /* ************************* */
 
 void messageLoop(void* param) {
-
   touch_value_t _touchVal;
-  _touchVal = touchRead(TPPIN);
-  touchAttachInterrupt(TPPIN, &touchpadCallback, _touchVal * 6 / 5);
+  _touchVal = touchRead(tpPin);
+  touchAttachInterrupt(tpPin, &touchpadCallback, _touchVal * 6 / 5);
   Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal * 8 / 7);
 
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
@@ -218,6 +235,7 @@ void rfListen(void* param) {
   while(true) {
 
     buffer[bufferIdx] = digitalRead(rfReceivePin);
+    digitalWrite(speakerPin, HIGH);
     
     // Check if buffer, starting from NEXT value, matches the key
     // If it does, reset timestamp and send a timestamp-reset message to server
@@ -235,4 +253,14 @@ void rfListen(void* param) {
 
     delay(rfPulseIntervalMs);
   }
+}
+
+/* ************************* */
+/*         Utilities         */
+/* ************************* */
+
+void writeLed(int r, int g, int b) {
+  ledcWrite(ledRedPin, r);
+  ledcWrite(ledGreenPin, g);
+  ledcWrite(ledBluePin, b);
 }
