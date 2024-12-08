@@ -5,6 +5,7 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
+#include "esp_system.h"
 #include "esp32-hal-touch.h"
 
 #define SERIAL_BAUDRATE 921600
@@ -188,6 +189,9 @@ void processIncomingMessage(String msg) {
   if (msg == "RESET") {
     touched = false;
     writeLed(255, 35, 0);
+  } else if (msg == "RESTART") {
+    Serial.printf("Received RESTART message!!!");
+    esp_restart();
   }
 }
 
