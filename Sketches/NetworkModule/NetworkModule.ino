@@ -135,7 +135,8 @@ void setup() {
 }
 
 void loop() {
-  vTaskDelay(250);
+  //vTaskDelay(250);
+  vTaskDelete(NULL);
 }
 
 /* ************************* */
@@ -227,7 +228,7 @@ void messageLoop(void* param) {
       processIncomingMessage(line);
     }
     
-    delay(250);
+    vTaskDelay((TickType_t) (200 / portTICK_PERIOD_MS)); // ~200ms delay to satisfy the scheduler
   }
 }
 
