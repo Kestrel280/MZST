@@ -32,7 +32,7 @@ public class Course {
         this.editing = false;
 
         // Remove any contiguous duplicates
-        for (int i = this.nodeSequence.size() - 1; i > 1; i--) {
+        for (int i = this.nodeSequence.size() - 1; i > 0; i--) {
             if (this.nodeSequence.get(i).equals(this.nodeSequence.get(i - 1))) {
                 this.nodeSequence.remove(i);
             }
