@@ -107,9 +107,9 @@ public class Server {
                     Log.i("debug", String.format("connected client id is %d", client.id));
 
                     switch (registrationMessage.code) {
-                        case ClientMessage.MTYPE_REGISTER_USER: client.setType(Client.USER); userHandler.registerClient(client); break;
-                        case ClientMessage.MTYPE_REGISTER_NODE: client.setType(Client.NODE); nodeHandler.registerClient(client); break;
-                        case ClientMessage.MTYPE_REGISTER_TRANSMITTER: client.setType(Client.TRANSMITTER); transmitterHandler.registerClient(client); break;
+                        case ClientMessage.MTYPE_REGISTER_USER: client.setType(Client.USER); userHandler.registerClient(client, registrationMessage.data); break;
+                        case ClientMessage.MTYPE_REGISTER_NODE: client.setType(Client.NODE); nodeHandler.registerClient(client, registrationMessage.data); break;
+                        case ClientMessage.MTYPE_REGISTER_TRANSMITTER: client.setType(Client.TRANSMITTER); transmitterHandler.registerClient(client, registrationMessage.data); break;
                         default: {
                             Log.i("server", "Received invalid registration message type %d; rejecting connection");
                             socket.close();
@@ -144,7 +144,9 @@ public class Server {
             shutdown = true;
         }
 
-        public void registerClient(Client client) {
+        public void registerClient(Client client, int data) {
+            Log.i("server", String.format("Registering client %d of type %d with data %d", client.id, client.type, data));
+            MainActivity.debugMsgToAppView(String.format("%s registering client %d of type %d w/ data = %d", this.name, client.id, client.type, data));
             newClientsQueue.add(client);
         }
 
@@ -166,7 +168,6 @@ public class Server {
                 while (!newClientsQueue.isEmpty()) {
                     Client newClient = newClientsQueue.remove();
                     clients.put(newClient.id, newClient); // TODO this will overwrite any client with same id. may want to add a warning
-                    MainActivity.debugMsgToAppView(String.format("%s registered client id %d", this.name, newClient.id));
                     Log.i("server", String.format("%s registered client %d", this.name, newClient.id));
                 }
 
@@ -208,7 +209,7 @@ public class Server {
                 actionHandler.processAction(
                         new ServerAction(ActionType.TRIGGER)
                                 .setClientId(cMsg.id)
-                                .setTimestamp(cMsg.timestamp));
+                                .setTimestamp(cMsg.data));
                 response.text = "RESET";
                 break;
             }

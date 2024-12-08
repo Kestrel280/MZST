@@ -37,6 +37,7 @@ public class Course {
                 this.nodeSequence.remove(i);
             }
         }
+        MainActivity.debugMsgToAppView("Finished editing course with sequence " + this.nodeSequence.toString());
         Log.i("course", String.format("Finished editing course %d: sequence is ", this.id) + this.nodeSequence.toString());
         return this;
     }

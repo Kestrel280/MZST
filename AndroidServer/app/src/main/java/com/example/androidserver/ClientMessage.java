@@ -18,7 +18,7 @@ public class ClientMessage {
 
     public short code;
     public short id;
-    public long timestamp;
+    public int data;
 
     ClientMessage(char[] raw) {
 
@@ -27,6 +27,6 @@ public class ClientMessage {
 
         this.code = bb.getShort(0);
         this.id = bb.getShort(2);
-        this.timestamp = bb.getInt(4); // TODO Something wrong here, probably related to sign
+        this.data = bb.getInt(4); // TODO Something wrong here, probably related to sign
     }
 }

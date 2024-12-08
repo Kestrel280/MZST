@@ -16,11 +16,11 @@
 typedef struct {
     short type;
     short id;
-    unsigned long ts;
+    uint32_t data;
 } OutboundMessage;
 
 // Prototypes
-OutboundMessage createOutboundMessage(char type);
+OutboundMessage createOutboundMessage(char type, uint32_t data);
 void processIncomingMessage(String msg);
 void touchpadCallback(void* param);
 void sendMessage(OutboundMessage msg);
@@ -48,7 +48,7 @@ const char MTYPE_TIMESTAMPRESET = 66;
 // State globals
 unsigned short id = 2;
 bool touched = false;
-unsigned long timestampLastReset = 0; 
+uint32_t timestampLastReset = 0; 
 
 // Other globals
 NetworkModule module;
@@ -104,8 +104,6 @@ void setup() {
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
   writeLed(0, 255, 0);
-
-  sendMessage(createOutboundMessage(MTYPE_REGISTER));
 
   Serial.printf("starting tasks\n");
 
@@ -173,7 +171,7 @@ bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, i
 void touchpadCallback() {
   if (!touched) {
     touched = true;
-    outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED));
+    outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, millis() - timestampLastReset));
     writeLed(255, 255, 255);
   }
 }
@@ -200,11 +198,11 @@ void processIncomingMessage(String msg) {
   }
 }
 
-OutboundMessage createOutboundMessage(char type) {
+OutboundMessage createOutboundMessage(char type, unsigned long data) {
   OutboundMessage msg;
   msg.type = type;
   msg.id = id;
-  msg.ts = millis() - timestampLastReset;
+  msg.data = data;
   return msg;
 }
 
@@ -217,12 +215,14 @@ void sendMessage(OutboundMessage msg) {
 /* ************************* */
 
 void messageLoop(void* param) {
+  Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
+  
   touch_value_t _touchVal;
   _touchVal = touchRead(tpPin);
-  touchAttachInterrupt(tpPin, &touchpadCallback, _touchVal * 6 / 5);
+  sendMessage(createOutboundMessage(MTYPE_REGISTER, (uint32_t) _touchVal));
+  touchAttachInterrupt(tpPin, &touchpadCallback, _touchVal * 11 / 10);
   Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal * 8 / 7);
 
-  Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
 
   while (true) {
     while(!outboundMessageQueue.empty()) {
@@ -272,7 +272,7 @@ void rfListen(void* param) {
     
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
-      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET));
+      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET, millis() - timestampLastReset));
       timestampLastReset = millis();
       Serial.printf("Received timestamp-reset key (%d / %d matched bits, %d required) \n", matchedBits, 32, rfKeyRequiredMatches);
     };
