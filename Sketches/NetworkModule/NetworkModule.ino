@@ -46,7 +46,7 @@ const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
 
 // State globals
-unsigned short id = 2;
+unsigned short id = 9;
 bool touched = false;
 uint32_t timestampLastReset = 0; 
 
@@ -88,8 +88,8 @@ void setup() {
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
     Serial.printf(".");
+    vTaskDelay(250);
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString());
 
@@ -99,7 +99,7 @@ void setup() {
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
   while(!socket.connect(HOST, PORT)) {
     Serial.printf(".");
-    delay(50);
+    vTaskDelay(250);
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
@@ -217,12 +217,16 @@ void sendMessage(OutboundMessage msg) {
 void messageLoop(void* param) {
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
   
-  touch_value_t _touchVal;
+  // Normally aliased to touch_val_t
+  //   which is uint16_t on ESP32, uint32_t on ESP32s2/s3
+  // Explicitly use uint32_t because the behavior of touchPadInterrupt() is different for both anyway
+  // ('threshold' argument is a true threshold for ESP32, but on ESP32s2/s3 it's an INCREMENT value)
+  uint32_t _touchVal, _touchIncrement;
   _touchVal = touchRead(tpPin);
-  sendMessage(createOutboundMessage(MTYPE_REGISTER, (uint32_t) _touchVal));
-  touchAttachInterrupt(tpPin, &touchpadCallback, _touchVal * 11 / 10);
-  Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal * 8 / 7);
-
+  _touchIncrement = _touchVal / 8;
+  sendMessage(createOutboundMessage(MTYPE_REGISTER, _touchVal + _touchIncrement));
+  touchAttachInterrupt(tpPin, &touchpadCallback, _touchIncrement);
+  Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal + _touchIncrement);
 
   while (true) {
     while(!outboundMessageQueue.empty()) {
