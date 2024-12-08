@@ -1,6 +1,9 @@
 package com.example.androidserver;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +17,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.OnLifecycleEvent;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -107,5 +111,26 @@ public class MainActivity extends AppCompatActivity {
         radioGrp.check(R.id.dbgRadioUsers);
 
         Log.i("main", "Main activity done");
+    }
+
+    @Override
+    protected void onStop() {
+        server.shutdown();
+        super.onStop();
+    }
+
+    public void triggerRebirth(View view) {
+        server.shutdown();
+
+        Context context = getApplicationContext();
+        PackageManager packageManager = context.getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+        ComponentName componentName = intent.getComponent();
+        Intent mainIntent = Intent.makeRestartActivityTask(componentName);
+        // Required for API 34 and later
+        // Ref: https://developer.android.com/about/versions/14/behavior-changes-14#safer-intents
+        mainIntent.setPackage(context.getPackageName());
+        context.startActivity(mainIntent);
+        Runtime.getRuntime().exit(0);
     }
 }

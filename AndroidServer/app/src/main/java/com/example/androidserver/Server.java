@@ -30,8 +30,12 @@ public class Server {
     protected ServerSocket  serverSocket = null;
     public ClientHandler userHandler;
     public ClientHandler nodeHandler;
-    public ClientHandler transmitterHandler;
     protected ConnectionListener connectionListener;
+    public ClientHandler transmitterHandler;
+    private Thread userHandlerThread;
+    private Thread nodeHandlerThread;
+    private Thread transmitterHandlerThread;
+    private Thread connectionListenerThread;
 
     /* ************************ */
     /*           Enums          */
@@ -51,20 +55,6 @@ public class Server {
 
     public Server(WifiManager wifiManager, int port) {
 
-        Runtime.getRuntime().addShutdownHook(new Thread( () -> {
-            try {
-                serverSocket.close();
-                userHandler.shutdown();
-                nodeHandler.shutdown();
-                transmitterHandler.shutdown();
-                connectionListener.shutdown();
-                Log.i("server", "Server shutdown hook");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }));
-        Log.i("server", String.format("(Server) Server registered shutdown hook", getLocalIpAddress(), PORT));
-
         this.state = ServerState.IDLE;
         this.actionHandler = new ActionHandler(this);
 
@@ -76,38 +66,41 @@ public class Server {
             nodeHandler = new ClientHandler("nodeHandler");
             transmitterHandler = new ClientHandler("transmitterHandler");
 
-            Thread userHandlerThread = new Thread(userHandler);
-            Thread nodeHandlerThread = new Thread(nodeHandler);
-            Thread transmitterHandlerThread = new Thread(transmitterHandler);
+            userHandlerThread = new Thread(userHandler);
+            nodeHandlerThread = new Thread(nodeHandler);
+            transmitterHandlerThread = new Thread(transmitterHandler);
             userHandlerThread.start();
             nodeHandlerThread.start();
             transmitterHandlerThread.start();
 
             connectionListener = new ConnectionListener(serverSocket, userHandler, nodeHandler, transmitterHandler);
-            Thread listenerThread = new Thread(connectionListener);
-            listenerThread.start();
+            connectionListenerThread = new Thread(connectionListener);
+            connectionListenerThread.start();
         } catch (IOException i) {
             Log.d("server", i.toString());
         }
     }
 
     private class ConnectionListener implements Runnable {
+        public volatile boolean shutdown = false;
         protected Socket socket;
         ConnectionListener(ServerSocket serverSocket, ClientHandler userHandler, ClientHandler nodeHandler, ClientHandler transmitterHandler) {
             Log.i("server", "ConnectionListener started");
         }
 
-        public void shutdown() {}
+        public void postShutdown() {
+            shutdown = true;
+        }
 
         @Override
         public void run() {
-            while (true) {
+            do {
                 Log.i("server", "ConnectionListener waiting for clients...");
                 try {
                     ClientMessage registrationMessage = null;
                     socket = serverSocket.accept();
                     Client client = new Client(socket);
-                    while (registrationMessage == null) {
+                    while ((registrationMessage == null) && !shutdown) {
                         registrationMessage = client.readMessage();
                     }
                     client.id = registrationMessage.id;
@@ -125,11 +118,17 @@ public class Server {
                 } catch (IOException e) {
                     Log.d("server", e.toString());
                 }
+            } while (!shutdown);
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
 
     public class ClientHandler implements Runnable {
+        private volatile boolean shutdown = false;
         public String name;
         public HashMap<Integer, Client> clients = new HashMap<>();
         Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
@@ -141,7 +140,9 @@ public class Server {
             this.name = handlerName;
         }
 
-        public void shutdown() {}
+        public void postShutdown() {
+            shutdown = true;
+        }
 
         public void registerClient(Client client) {
             newClientsQueue.add(client);
@@ -159,7 +160,7 @@ public class Server {
         public void run() {
             ServerMessage response;
             List<ClientMessage> inboundMessages;
-            while (true) {
+            do {
                 // TODO may want to add timeouts here;
 
                 while (!newClientsQueue.isEmpty()) {
@@ -191,7 +192,7 @@ public class Server {
                         client.sendMessage(response);
                     }
                 }
-            }
+            } while (!shutdown);
         }
     }
 
@@ -269,4 +270,27 @@ public class Server {
         }
         return null;
     }
+
+    public void shutdown() {
+        try {
+            Log.i("server", "Server shutting down; sending SHUTDOWN message");
+            nodeHandler.postBroadcast(new ServerMessage("SHUTDOWN"));
+            userHandler.postBroadcast(new ServerMessage("SHUTDOWN"));
+            transmitterHandler.postBroadcast(new ServerMessage("SHUTDOWN"));
+            connectionListener.postShutdown();
+            userHandler.postShutdown();
+            nodeHandler.postShutdown();
+            transmitterHandler.postShutdown();
+
+            //connectionListenerThread.join();
+            userHandlerThread.join();
+            nodeHandlerThread.join();
+            transmitterHandlerThread.join();
+
+            Log.i("server", " --- Server successfully shut down ---");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

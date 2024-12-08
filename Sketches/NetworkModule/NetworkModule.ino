@@ -188,9 +188,14 @@ void processIncomingMessage(String msg) {
 
   if (msg == "RESET") {
     touched = false;
-    writeLed(255, 35, 0);
-  } else if (msg == "RESTART") {
+    writeLed(255, 35 , 0);
+  }
+  if (msg == "RESTART") {
     Serial.printf("Received RESTART message!!!");
+    esp_restart();
+  }
+  if (msg == "SHUTDOWN") {
+    Serial.printf("Received SHUTDOWN message!!!");
     esp_restart();
   }
 }
