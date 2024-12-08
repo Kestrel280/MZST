@@ -1,5 +1,7 @@
 package com.example.androidserver;
 
+import static com.example.androidserver.Server.ServerState.*;
+
 import android.util.Log;
 
 import com.example.androidserver.Server.ServerState;
@@ -26,18 +28,21 @@ public class ActionHandler {
             case FINISHED:  newState = doFinished(action); break;
             default: newState = server.getState();
         }
+        server.setState(newState);
         return newState;
     }
 
     // Individual state dispatches
     public ServerState doIdle(ServerAction action) {
         switch (action.type) {
-            case NEW: break;
+            case NEW:
+                server.createNewCourse();
+                return DEFINE;
             case LOAD: break;
             default: break;
         }
 
-        return ServerState.IDLE;
+        return IDLE;
     }
 
     public ServerState doRun(ServerAction action) {
@@ -47,20 +52,27 @@ public class ActionHandler {
             default: break;
         }
 
-        return ServerState.RUN;
+        return RUN;
     }
 
     public ServerState doDefine(ServerAction action) {
         switch (action.type) {
-            case NEW: break;
+            case NEW:
+                // TODO prompt if want to save current course
+                server.createNewCourse();
+                return DEFINE;
             case LOAD: break;
             case RESET: break;
-            case TRIGGER: break;
-            case SAVE: break;
+            case TRIGGER:
+                server.currentCourse.addNode(action.clientId);
+                return DEFINE;
+            case SAVE:
+                server.saveCurrentCourse();
+                return READY;
             default: break;
         }
 
-        return ServerState.DEFINE;
+        return DEFINE;
     }
 
     public ServerState doReady(ServerAction action) {
@@ -71,7 +83,7 @@ public class ActionHandler {
             default: break;
         }
 
-        return ServerState.READY;
+        return READY;
     }
 
     public ServerState doFinished(ServerAction action) {
@@ -82,7 +94,7 @@ public class ActionHandler {
             default: break;
         }
 
-        return ServerState.FINISHED;
+        return FINISHED;
     }
 
     // Individual actions

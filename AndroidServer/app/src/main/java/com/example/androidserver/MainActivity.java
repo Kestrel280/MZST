@@ -37,19 +37,15 @@ public class MainActivity extends AppCompatActivity {
         switch (btnView.getTag().toString()) {
             case "new":
                 action = new ServerAction(ServerAction.ActionType.NEW);
-                Log.i("main", "debug button 'new' clicked");
                 break;
             case "load":
                 action = new ServerAction(ServerAction.ActionType.LOAD).setCourseId(123);
-                Log.i("main", "debug button 'load' clicked");
                 break;
             case "save":
                 action = new ServerAction(ServerAction.ActionType.SAVE);
-                Log.i("main", "debug button 'save' clicked");
                 break;
             case "reset":
                 action = new ServerAction(ServerAction.ActionType.RESET);
-                Log.i("main", "debug button 'reset' clicked");
                 break;
             case "send":
                 msg = new ServerMessage(stringInput);

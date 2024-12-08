@@ -1,6 +1,9 @@
 package com.example.androidserver;
 
+import android.util.Log;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Course {
     private int id; // Course id; not directly modifiable by user, should only be accessed/changed upon saving/loading from a database
@@ -21,6 +24,7 @@ public class Course {
         if (this.editing) {
             this.nodeSequence.add(nodeId);
         }
+        Log.i("course", String.format("Course %d added node %d; course is now", this.id, nodeId) + this.nodeSequence.toString());
         return this;
     }
 
@@ -33,6 +37,7 @@ public class Course {
                 this.nodeSequence.remove(i);
             }
         }
+        Log.i("course", String.format("Finished editing course %d: sequence is ", this.id) + this.nodeSequence.toString());
         return this;
     }
 

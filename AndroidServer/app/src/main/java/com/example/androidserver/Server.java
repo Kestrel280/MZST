@@ -22,7 +22,7 @@ import java.util.Queue;
 public class Server {
     public static final int PORT = 5000;
 
-    private Course currentCourse;
+    public Course currentCourse;
 
     private ServerState state;
     private ActionHandler actionHandler;
@@ -33,9 +33,9 @@ public class Server {
     public ClientHandler transmitterHandler;
     protected ConnectionListener connectionListener;
 
-    public ServerState getState() {
-        return state;
-    }
+    /* ************************ */
+    /*           Enums          */
+    /* ************************ */
 
     public enum ServerState {
         IDLE,
@@ -44,6 +44,10 @@ public class Server {
         READY,
         FINISHED;
     }
+
+    /* ************************ */
+    /*   Classes/Constructors   */
+    /* ************************ */
 
     public Server(WifiManager wifiManager, int port) {
 
@@ -191,6 +195,10 @@ public class Server {
         }
     }
 
+    /* ************************ */
+    /*     Message  handling    */
+    /* ************************ */
+
     private ServerMessage processMessage(ClientMessage cMsg) {
         ServerMessage response = new ServerMessage("ACK");
 
@@ -208,10 +216,37 @@ public class Server {
         return response;
     }
 
+    /* ************************ */
+    /*     Action Processing    */
+    /* ************************ */
+
+    public ServerState getState() {
+        return state;
+    }
+
+    public void setState(ServerState newState) {
+        Log.i("server", "Server state set to " + newState.toString());
+        state = newState;
+    }
+
     public String sendAction(ServerAction action) {
         Log.i("server", "Server received action of type " + action.type.toString());
         actionHandler.processAction(action);
         return "";
+    }
+
+    /* ************************ */
+    /*     Course Management    */
+    /* ************************ */
+
+    public void createNewCourse() {
+        this.currentCourse = new Course();
+    }
+
+    public void saveCurrentCourse() {
+        this.currentCourse.finishEditing();
+        // TODO prompt for name
+        // TODO save to database
     }
 
     /* *****************************
