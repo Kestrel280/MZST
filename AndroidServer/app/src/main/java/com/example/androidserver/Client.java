@@ -31,7 +31,7 @@ public class Client {
         try {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer = new PrintWriter(socket.getOutputStream(), true);
-            id = __debug_id++; // TODO read id from client
+            id = -1; // id will be set when reading registration message
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

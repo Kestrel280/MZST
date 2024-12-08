@@ -22,6 +22,8 @@ import java.util.Queue;
 public class Server {
     public static final int PORT = 5000;
 
+    private Course currentCourse;
+
     private ServerState state;
     private ActionHandler actionHandler;
 
@@ -104,6 +106,8 @@ public class Server {
                     while (registrationMessage == null) {
                         registrationMessage = client.readMessage();
                     }
+                    client.id = registrationMessage.id;
+                    Log.i("debug", String.format("connected client id is %d", client.id));
 
                     switch (registrationMessage.code) {
                         case ClientMessage.MTYPE_REGISTER_USER: client.setType(Client.USER); userHandler.registerClient(client); break;
@@ -126,7 +130,7 @@ public class Server {
         public HashMap<Integer, Client> clients = new HashMap<>();
         Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
         Queue<ServerMessage> outboundBroadcastQueue = new ArrayDeque<>();
-        Queue<Pair<Integer, Client>> newClientsQueue = new ArrayDeque<>();
+        Queue<Client> newClientsQueue = new ArrayDeque<>();
 
         ClientHandler(String handlerName) {
             Log.i("server", "ClientHandler " + handlerName + " started");
@@ -136,7 +140,7 @@ public class Server {
         public void shutdown() {}
 
         public void registerClient(Client client) {
-            newClientsQueue.add(new Pair<>(client.id, client));
+            newClientsQueue.add(client);
         }
 
         public void postBroadcast(ServerMessage msg) {
@@ -155,10 +159,10 @@ public class Server {
                 // TODO may want to add timeouts here;
 
                 while (!newClientsQueue.isEmpty()) {
-                    Pair<Integer, Client> p = newClientsQueue.remove();
-                    clients.put(p.first, p.second);
-                    MainActivity.debugMsgToAppView(String.format("%s registered client %d", this.name, p.first));
-                    Log.i("server", String.format("%s registered client %d", this.name, p.first));
+                    Client newClient = newClientsQueue.remove();
+                    clients.put(newClient.id, newClient); // TODO this will overwrite any client with same id. may want to add a warning
+                    MainActivity.debugMsgToAppView(String.format("%s registered client id %d", this.name, newClient.id));
+                    Log.i("server", String.format("%s registered client %d", this.name, newClient.id));
                 }
 
                 while (!outboundMessageQueue.isEmpty()) {
