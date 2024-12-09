@@ -55,7 +55,7 @@ public class Server {
 
     public Server(WifiManager wifiManager, int port) {
 
-        this.state = ServerState.IDLE;
+        this.setState(ServerState.IDLE);
         this.actionHandler = new ActionHandler(this);
 
         try {
@@ -146,7 +146,7 @@ public class Server {
 
         public void registerClient(Client client, int data) {
             Log.i("server", String.format("Registering client %d of type %d with data %d", client.id, client.type, data));
-            MainActivity.debugMsgToAppView(String.format("%s registering client %d of type %d w/ data = %d", this.name, client.id, client.type, data));
+            MainActivity.debugMsgToAppView(String.format("%s registering client %d of type %d w/ data = %d", this.name, client.id, client.type, data), "debug");
             newClientsQueue.add(client);
         }
 
@@ -228,6 +228,7 @@ public class Server {
 
     public void setState(ServerState newState) {
         Log.i("server", "Server state set to " + newState.toString());
+        MainActivity.debugMsgToAppView(newState.toString(), "state");
         state = newState;
     }
 

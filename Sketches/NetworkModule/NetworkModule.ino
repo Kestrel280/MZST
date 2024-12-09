@@ -56,7 +56,7 @@ WiFiClient socket;
 std::queue<OutboundMessage> outboundMessageQueue;
 
 // Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.109";
+const char* HOST = "192.168.1.111";
 const uint16_t PORT = 5000;
 
 void setup() {
@@ -241,7 +241,7 @@ void messageLoop(void* param) {
       processIncomingMessage(line);
     }
     
-    vTaskDelay((TickType_t) (200 / portTICK_PERIOD_MS)); // ~200ms delay to satisfy the scheduler
+    //vTaskDelay((TickType_t) (200 / portTICK_PERIOD_MS)); // ~200ms delay to satisfy the scheduler
   }
 }
 

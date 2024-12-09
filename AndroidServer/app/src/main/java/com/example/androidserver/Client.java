@@ -50,7 +50,7 @@ public class Client {
                 reader.read(line, 0, ClientMessage.PacketSize);
                 msg = new ClientMessage(line);
                 Log.i("server", String.format("Received msg from client %d of type %d: code=%d, id=%d, data=%d", this.id, this.type, msg.code, msg.id, msg.data));
-                MainActivity.debugMsgToAppView(String.format("Received msg from client %d of type %d: code=%d, id=%d, data=%d", this.id, this.type, msg.code, msg.id, msg.data));
+                MainActivity.debugMsgToAppView(String.format("Received msg from client %d of type %d: code=%d, id=%d, data=%d", this.id, this.type, msg.code, msg.id, msg.data), "debug");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -3,7 +3,6 @@ package com.example.androidserver;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Course {
     private int id; // Course id; not directly modifiable by user, should only be accessed/changed upon saving/loading from a database
@@ -37,7 +36,7 @@ public class Course {
                 this.nodeSequence.remove(i);
             }
         }
-        MainActivity.debugMsgToAppView("Finished editing course with sequence " + this.nodeSequence.toString());
+        MainActivity.debugMsgToAppView("Finished editing course with sequence " + this.nodeSequence.toString(), "debug");
         Log.i("course", String.format("Finished editing course %d: sequence is ", this.id) + this.nodeSequence.toString());
         return this;
     }

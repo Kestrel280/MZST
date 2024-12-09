@@ -77,7 +77,9 @@ public class ActionHandler {
 
     public ServerState doReady(ServerAction action) {
         switch (action.type) {
-            case NEW: break;
+            case NEW:
+                server.createNewCourse();
+                return DEFINE;
             case LOAD: break;
             case START: break;
             default: break;
@@ -88,7 +90,9 @@ public class ActionHandler {
 
     public ServerState doFinished(ServerAction action) {
         switch (action.type) {
-            case NEW: break;
+            case NEW:
+                server.createNewCourse();
+                return DEFINE;
             case RESET: break;
             case LOAD: break;
             default: break;

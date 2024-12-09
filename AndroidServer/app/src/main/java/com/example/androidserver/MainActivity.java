@@ -17,11 +17,12 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.OnLifecycleEvent;
+
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static TextView debugTv;
+    private static HashMap<String, TextView> textViews;
     private WifiManager wifiManager;
     private Server server;
     private Server.ClientHandler debugSelectedHandler;
@@ -69,14 +70,16 @@ public class MainActivity extends AppCompatActivity {
     public static Handler uiMessageHandler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message inputMessage) {
-            debugTv.setText(inputMessage.getData().getCharSequence("MESSAGE"));
+            TextView view = textViews.get(inputMessage.getData().getCharSequence("VIEW"));
+            view.setText(inputMessage.getData().getCharSequence("MESSAGE"));
         }
     };
 
-    public static void debugMsgToAppView(String line) {
+    public static void debugMsgToAppView(String line, String viewName) {
         Message msg = MainActivity.uiMessageHandler.obtainMessage();
         Bundle bundle = new Bundle();
         bundle.putCharSequence("MESSAGE", line);
+        bundle.putCharSequence("VIEW", viewName);
         msg.setData(bundle);
         MainActivity.uiMessageHandler.sendMessage(msg);
     }
@@ -99,8 +102,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        debugTv = findViewById(R.id.debugText);
-        debugTv.setText("Waiting for clients");
+        textViews = new HashMap<>();
+        textViews.put("debug", findViewById(R.id.debugText));
+        textViews.put("state", findViewById(R.id.debugState));
+        textViews.get("debug").setText("Waiting for clients");
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 

@@ -13,4 +13,5 @@
     <string name="debugNumberInputHint">ID</string>
     <string name="debugStringInputHint">Outbound message</string>
     <string name="debugTextCurrentCourseText">Current Course: </string>
+    <string name="debugTextStateText"> --state-- </string>
 </resources>
