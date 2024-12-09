@@ -16,6 +16,8 @@ public class ClientMessage {
     public static final byte MTYPE_TIMESTAMPRESET = 66;
     public static final byte MTYPE_ERROR = 33;
 
+    public static final byte MTYPE_ACKREADY = 111; // When node receives a READY message, respond with an ACK_READY
+
     public short code;
     public short id;
     public int data;

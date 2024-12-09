@@ -68,6 +68,7 @@ public class ActionHandler {
                 return DEFINE;
             case SAVE:
                 server.saveCurrentCourse();
+                server.prepCurrentCourse();
                 return READY;
             default: break;
         }

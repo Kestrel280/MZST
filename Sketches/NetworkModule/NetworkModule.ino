@@ -14,10 +14,21 @@
 
 // Defined types
 typedef struct {
-    short type;
-    short id;
-    uint32_t data;
+  short type;
+  short id;
+  uint32_t data;
 } OutboundMessage;
+
+struct Color {
+  char r;
+  char g;
+  char b;
+  Color(char r, char g, char b) {
+    this->r = r;
+    this->g = g;
+    this->b = b;
+  }
+};
 
 // Prototypes
 OutboundMessage createOutboundMessage(char type, uint32_t data);
@@ -26,6 +37,9 @@ void touchpadCallback(void* param);
 void sendMessage(OutboundMessage msg);
 void rfListen(void* param);
 void messageLoop(void* param);
+uint32_t currentTimeAbs();
+uint32_t currentTime();
+void writeLed(Color color);
 
 // Hardware constants
 const touch_pad_t tpPin = TOUCH_PAD_NUM7;
@@ -44,6 +58,7 @@ const char MTYPE_REGISTER       = 2;
 const char MTYPE_TOUCHED        = 100;
 const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
+const char MTYPE_ACKREADY       = 111;
 
 // State globals
 unsigned short id = 9;
@@ -59,6 +74,15 @@ std::queue<OutboundMessage> outboundMessageQueue;
 const char* HOST = "192.168.1.111";
 const uint16_t PORT = 5000;
 
+// Colors
+Color colorBootup = Color(255, 255, 255);
+Color colorWaitingForWifiConnection = Color(255, 0, 0);
+Color colorWaitingForServerConnection = Color(0, 0, 255);
+Color colorInitializedModule = Color(0, 255, 0);
+Color colorTouched = Color(255, 255, 255);
+Color colorSilence = Color(0, 0, 0);
+Color colorReady = Color(255, 35, 0);
+
 void setup() {
 
   // Setup
@@ -69,7 +93,7 @@ void setup() {
   ledcAttach(ledRedPin, 5000, 8);
   ledcAttach(ledGreenPin, 5000, 8);
   ledcAttach(ledBluePin, 5000, 8);
-  writeLed(255, 0, 0);
+  writeLed(colorBootup);
   digitalWrite(speakerPin, HIGH);
   sleep(2);
   Serial.printf("--- initialized ---\n");
@@ -83,7 +107,7 @@ void setup() {
   Serial.printf("Read SSID from EEPROM: %s\n", module.networkSsid);
   Serial.printf("Read Password from EEPROM: %s\n", module.networkPassword);
 
-  writeLed(255, 0, 0);
+  writeLed(colorWaitingForWifiConnection);
 
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
@@ -93,7 +117,7 @@ void setup() {
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString());
 
-  writeLed(0, 0, 255);
+  writeLed(colorWaitingForServerConnection);
 
   // Connect to socket
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
@@ -103,7 +127,7 @@ void setup() {
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
-  writeLed(0, 255, 0);
+  writeLed(colorInitializedModule);
 
   Serial.printf("starting tasks\n");
 
@@ -129,12 +153,10 @@ void setup() {
     &rfListenerTask,  /* Task handle to keep track of created task */
     1);               /* pin task to core 1 */
   Serial.printf("started rf receiver\n");
-  sleep(2);
-  writeLed(255, 30, 0);
+  sleep(1);
 }
 
 void loop() {
-  //vTaskDelay(250);
   vTaskDelete(NULL);
 }
 
@@ -171,8 +193,8 @@ bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, i
 void touchpadCallback() {
   if (!touched) {
     touched = true;
-    outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, millis() - timestampLastReset));
-    writeLed(255, 255, 255);
+    outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, currentTime()));
+    writeLed(colorTouched);
   }
 }
 
@@ -186,7 +208,15 @@ void processIncomingMessage(String msg) {
 
   if (msg == "RESET") {
     touched = false;
-    writeLed(255, 35 , 0);
+    writeLed(colorSilence);
+  }
+  if (msg == "SILENCE") {
+    writeLed(colorSilence);
+  }
+  if (msg == "READY") {
+    touched = false;
+    outboundMessageQueue.push(createOutboundMessage(MTYPE_ACKREADY, currentTime()));
+    writeLed(colorReady);
   }
   if (msg == "RESTART") {
     Serial.printf("Received RESTART message!!!");
@@ -276,8 +306,8 @@ void rfListen(void* param) {
     
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
-      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET, millis() - timestampLastReset));
-      timestampLastReset = millis();
+      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET, currentTime()));
+      timestampLastReset = currentTimeAbs();
       Serial.printf("Received timestamp-reset key (%d / %d matched bits, %d required) \n", matchedBits, 32, rfKeyRequiredMatches);
     };
 
@@ -289,8 +319,16 @@ void rfListen(void* param) {
 /*         Utilities         */
 /* ************************* */
 
-void writeLed(int r, int g, int b) {
-  ledcWrite(ledRedPin, r);
-  ledcWrite(ledGreenPin, g);
-  ledcWrite(ledBluePin, b);
+// TODO make inline
+uint32_t currentTimeAbs() {
+  return millis();
+}
+uint32_t currentTime() {
+  return currentTimeAbs() - timestampLastReset;
+}
+
+void writeLed(Color color) {
+  ledcWrite(ledRedPin, color.r);
+  ledcWrite(ledGreenPin, color.g);
+  ledcWrite(ledBluePin, color.b);
 }

@@ -16,6 +16,7 @@ import java.net.SocketException;
 import java.util.ArrayDeque;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
@@ -81,6 +82,27 @@ public class Server {
         }
     }
 
+    // Helper class...
+    // If the server wants to block until receiving a specific message type from a specific client,
+    //  it can create a Promise and register it using clientHandler.postPromise(promise).
+    //  Then, it can choose to block until that Promise is resolved using clientHandler.awaitPromise(promise).
+    // The Handler maintains an internal linked list of Promises.
+    //  Whenever the handler receives a msg, it will scan the linked list for any Promises
+    //  which match the received message. If the message matches, the message is stored
+    //  in the Promise's 'msg' field, and 'delivered' is set to true.
+    private class Promise {
+        public int clientId;
+        public int mType;
+        public volatile boolean resolved;
+        public ClientMessage msg;
+        Promise(int clientId, int mType) {
+            this.resolved = false;
+            this.clientId = clientId;
+            this.mType = mType;
+            this.msg = null;
+        }
+    }
+
     private class ConnectionListener implements Runnable {
         public volatile boolean shutdown = false;
         protected Socket socket;
@@ -134,9 +156,11 @@ public class Server {
         Queue<Pair<Integer, ServerMessage>> outboundMessageQueue = new ArrayDeque<>();
         Queue<ServerMessage> outboundBroadcastQueue = new ArrayDeque<>();
         Queue<Client> newClientsQueue = new ArrayDeque<>();
+        LinkedList<Promise> promises;
 
         ClientHandler(String handlerName) {
             Log.i("server", "ClientHandler " + handlerName + " started");
+            promises = new LinkedList<>();
             this.name = handlerName;
         }
 
@@ -156,6 +180,19 @@ public class Server {
 
         public void postMsg(int clientId, ServerMessage msg) {
             outboundMessageQueue.add(new Pair<>(clientId, msg));
+        }
+
+        public void postPromise(Promise promise) {
+            this.promises.add(promise);
+            Log.i("server", String.format("Handler %s registered Promise with id=%d, mtype=%d: LL looks like ", this.name, promise.clientId, promise.mType) + this.promises);
+        }
+
+        // Blocks the caller until the handler receives a message from a specific client of a specific type.
+        // See the comments on Promise class for details.
+        public void awaitPromise(Promise promise) {
+            while (!promise.resolved) {
+                Thread.currentThread().yield();
+            }
         }
 
         @Override
@@ -190,6 +227,15 @@ public class Server {
                     inboundMessages = client.readMessageQueue();
                     for (ClientMessage inboundMessage : inboundMessages) {
                         response = processMessage(inboundMessage);
+                        for (Promise promise : promises) {
+                            Log.i("server", String.format("   Checking if received message (id%d, mtype%d) matches promise(id%d, mype%d)...", inboundMessage.id, inboundMessage.code, promise.clientId, promise.mType));
+                            if ((inboundMessage.id == promise.clientId) && (inboundMessage.code == promise.mType)) {
+                                promise.msg = inboundMessage;
+                                promise.resolved = true;
+                                promises.remove(promise);
+                                Log.i("server", "   Matched and removed");
+                            }
+                        }
                         client.sendMessage(response);
                     }
                 }
@@ -250,6 +296,22 @@ public class Server {
         this.currentCourse.finishEditing();
         // TODO prompt for name
         // TODO save to database
+    }
+
+    public void prepCurrentCourse() {
+        Promise promise;
+        nodeHandler.postBroadcast(new ServerMessage("SILENCE"));
+        transmitterHandler.postBroadcast(new ServerMessage("TRANSMIT"));
+
+        for (int nodeId : currentCourse.nodeSequence) {
+            promise = new Promise(nodeId, ClientMessage.MTYPE_ACKREADY);
+            nodeHandler.postPromise(promise);
+            nodeHandler.postMsg(nodeId, new ServerMessage("READY"));
+            Log.i("server", "blocking until ACK READY message received from client " + nodeId);
+            nodeHandler.awaitPromise(promise);
+            //TODO await for ACK_TRANSMIT as well
+            Log.i("server", " UNBLOCKING !!!");
+        }
     }
 
     /* *****************************
