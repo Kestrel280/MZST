@@ -1,3 +1,5 @@
+#include <string>
+#include <sstream>
 #include <queue>
 #include <EEPROM.h>
 #include <WiFi.h>
@@ -12,32 +14,23 @@
 #define EEPROM_SIZE 512
 #define NOOP __asm__("nop\n\t");
 
-// Prototypes
-struct StateData;
-struct OutboundMessage;
-struct Color;
-OutboundMessage createOutboundMessage(char type, uint32_t data);
-void processIncomingMessage(String msg);
-void touchpadCallback(void* param);
-void sendMessage(OutboundMessage msg);
-void rfListen(void* param);
-void messageLoop(void* param);
-uint32_t currentTimeAbs();
-uint32_t currentTime();
-void writeLed(Color color);
+unsigned short id = 9;            // ID of the node. TODO Move this to EEPROM
 
-// State globals
-unsigned short id = 9;
-bool touched = false;
-uint32_t timestampLastReset = 0; 
+typedef enum _State {
+  INIT_BootStart,             // State set immediately upon module boot
+  READYRUN_StartNode,         // Starting node for a course. When it's touched, server will move into RUN state
+  READYRUN_NotPartOfCourse,   // In ready/run mode: the node IS NOT part of the active course
+  READYRUN_NoTriggersDone,    // In ready/run mode: the node is part of the active course, but has not yet been triggered a single time
+  READYRUN_SomeTriggersDone,  // In ready/run mode: the node is part of the active course, and has been triggered, but the node re-appears later in the course so it will need to be triggered again
+  READYRUN_AllTriggersDone,   // In ready/run mode: the node IS part of the active course, and has been triggered, and does not appear later in the course
+  DEFINE_SelectedNode,        // In edit mode: the most-recently selected node
+  DEFINE_NotInCourse,         // In edit mode: a node which has not been added to the course, but is able to be added
+  DEFINE_InCourse,            // In edit mode: a node which has been added to the course, and is able to be added again
+  FINISHED_SuccessfulRun,     // In finished mode: the run was successful
+  FINISHED_UnsuccessfulRun    // In finished mode: the run was unsuccessful
+} State;
 
 // Defined types
-struct OutboundMessage {
-  short type;
-  short id;
-  uint32_t data;
-};
-
 struct Color {
   char r;
   char g;
@@ -50,10 +43,32 @@ struct Color {
 };
 
 struct StateData {
-  bool receptiveToTouch;
-  Color colorIdle;
-  Color colorOnTouch;
+  Color* colorIdle;
+  Color* colorOnTouch; // If null, non-receptive to touch
+  StateData(Color* colorIdle, Color* colorOnTouch) {
+    this->colorIdle = colorIdle;
+    this->colorOnTouch = colorOnTouch;
+  }
 };
+
+struct OutboundMessage {
+  short type;
+  short id;
+  uint32_t data;
+};
+
+// Prototypes
+OutboundMessage createOutboundMessage(char type, uint32_t data);
+State parseStateName(std::string stateName);
+void setState(State newState);
+void processIncomingMessage(std::string msg);
+void touchpadCallback(void* param);
+void sendMessage(OutboundMessage msg);
+void rfListen(void* param);
+void messageLoop(void* param);
+uint32_t currentTimeAbs();
+uint32_t currentTime();
+void writeLed(Color color);
 
 // Hardware constants
 const touch_pad_t tpPin = TOUCH_PAD_NUM7;
@@ -84,6 +99,9 @@ const char* HOST = "192.168.1.111";
 const uint16_t PORT = 5000;
 
 // Colors
+Color colorCyan     = Color(0, 150, 150);
+Color colorWhite    = Color(255, 255, 255);
+
 Color colorBootup = Color(255, 255, 255);
 Color colorWaitingForWifiConnection = Color(255, 0, 0);
 Color colorWaitingForServerConnection = Color(0, 0, 255);
@@ -92,18 +110,11 @@ Color colorTouched = Color(255, 255, 255);
 Color colorSilence = Color(0, 0, 0);
 Color colorReady = Color(255, 35, 0);
 
-typedef enum _State {
-  READYRUN_StartNode,         // Starting node for a course. When it's touched, server will move into RUN state
-  READYRUN_NotPartOfCourse,   // In ready/run mode: the node IS NOT part of the active course
-  READYRUN_NoTriggersDone,    // In ready/run mode: the node is part of the active course, but has not yet been triggered a single time
-  READYRUN_SomeTriggersDone,  // In ready/run mode: the node is part of the active course, and has been triggered, but the node re-appears later in the course so it will need to be triggered again
-  READYRUN_AllTriggersDone,   // In ready/run mode: the node IS part of the active course, and has been triggered, and does not appear later in the course
-  DEFINE_SelectedNode,        // In edit mode: the most-recently selected node
-  DEFINE_NotInCourse,         // In edit mode: a node which has not been added to the course, but is able to be added
-  DEFINE_InCourse,            // In edit mode: a node which has been added to the course, and is able to be added again
-  FINISHED_SuccessfulRun,     // In finished mode: the run was successful
-  FINISHED_UnsuccessfulRun    // In finished mode: the run was unsuccessful
-} State;
+// State globals
+bool touched = false;             // Helper variable to track if the node has been triggered. Must be reset by server
+uint32_t timestampLastReset = 0;  // Timestamp when the node received the most recent RF broadcast
+State state;                      // Current State of the node
+StateData* stateData = nullptr;   // ... Data of the current state...
 
 void setup() {
 
@@ -137,7 +148,7 @@ void setup() {
     Serial.printf(".");
     vTaskDelay(250);
   }
-  Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString());
+  Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString().c_str());
 
   writeLed(colorWaitingForServerConnection);
 
@@ -216,7 +227,7 @@ void touchpadCallback() {
   if (!touched) {
     touched = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, currentTime()));
-    writeLed(colorTouched);
+    writeLed(*(stateData->colorOnTouch));
   }
 }
 
@@ -224,9 +235,25 @@ void touchpadCallback() {
 /*    Messaging Functions    */
 /* ************************* */
 
-void processIncomingMessage(String msg) {
+void processIncomingMessage(std::string msg) {
   Serial.printf("Received message from server: %s\n", msg.c_str());
   //for (char c : msg) { Serial.printf("%x ", c); }
+
+  std::stringstream iss(msg);
+  std::string word;
+
+  std::getline(iss, word, ' '); // Read the first word of the message into 'word'
+
+  if ((word == "RESTART") || (word == "SHUTDOWN")) {
+    Serial.printf("Received %s message! Restarting!", word.c_str());
+    esp_restart();
+  }
+
+  if (word == "SET_STATE") {
+    std::getline(iss, word, ' '); // Read the second word
+    setState(parseStateName(word));
+    return;
+  }
 
   if (msg == "RESET") {
     touched = false;
@@ -239,14 +266,6 @@ void processIncomingMessage(String msg) {
     touched = false;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_ACKREADY, currentTime()));
     writeLed(colorReady);
-  }
-  if (msg == "RESTART") {
-    Serial.printf("Received RESTART message!!!");
-    esp_restart();
-  }
-  if (msg == "SHUTDOWN") {
-    Serial.printf("Received SHUTDOWN message!!!");
-    esp_restart();
   }
 }
 
@@ -289,7 +308,7 @@ void messageLoop(void* param) {
     }
 
     while (socket.available() > 0) {
-      String line = socket.readStringUntil('\n');
+      std::string line = std::string(socket.readStringUntil('\n').c_str());
       processIncomingMessage(line);
     }
     
@@ -335,6 +354,52 @@ void rfListen(void* param) {
 
     delay(rfPulseIntervalMs);
   }
+}
+
+/* ************************* */
+/*           State           */
+/* ************************* */
+// ... ugh
+
+StateData SD_READYRUN_StartNode         = StateData(&colorCyan, &colorWhite);
+StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorCyan, &colorWhite);
+StateData SD_READYRUN_NoTriggersDone    = StateData(&colorCyan, &colorWhite);
+StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorCyan, &colorWhite);
+StateData SD_READYRUN_AllTriggersDone   = StateData(&colorCyan, &colorWhite);
+StateData SD_DEFINE_SelectedNode        = StateData(&colorCyan, &colorWhite);
+StateData SD_DEFINE_NotInCourse         = StateData(&colorCyan, &colorWhite);
+StateData SD_DEFINE_InCourse            = StateData(&colorCyan, &colorWhite);
+StateData SD_FINISHED_SuccessfulRun     = StateData(&colorCyan, &colorWhite);
+StateData SD_FINISHED_UnsuccessfulRun   = StateData(&colorCyan, &colorWhite);
+
+State parseStateName(std::string stateName) {
+  if      (stateName == "READYRUN_StartNode")         return READYRUN_StartNode;
+  else if (stateName == "READYRUN_NotPartOfCourse")   return READYRUN_NotPartOfCourse;
+  else if (stateName == "READYRUN_NoTriggersDone")    return READYRUN_NoTriggersDone;
+  else if (stateName == "READYRUN_SomeTriggersDone")  return READYRUN_SomeTriggersDone;
+  else if (stateName == "READYRUN_AllTriggersDone")   return READYRUN_AllTriggersDone;
+  else if (stateName == "DEFINE_SelectedNode")        return DEFINE_SelectedNode;
+  else if (stateName == "DEFINE_NotInCourse")         return DEFINE_NotInCourse;
+  else if (stateName == "DEFINE_InCourse")            return DEFINE_InCourse;
+  else if (stateName == "FINISHED_SuccessfulRun")     return FINISHED_SuccessfulRun;
+  else if (stateName == "FINISHED_UnsuccessfulRun")   return FINISHED_UnsuccessfulRun;
+}
+
+void setState(State newState) {
+  switch(newState) {
+    case READYRUN_StartNode:        stateData = &SD_READYRUN_StartNode;        break;
+    case READYRUN_NotPartOfCourse:  stateData = &SD_READYRUN_NotPartOfCourse;  break;
+    case READYRUN_NoTriggersDone:   stateData = &SD_READYRUN_NoTriggersDone;   break;
+    case READYRUN_SomeTriggersDone: stateData = &SD_READYRUN_SomeTriggersDone; break;
+    case READYRUN_AllTriggersDone:  stateData = &SD_READYRUN_AllTriggersDone;  break;
+    case DEFINE_SelectedNode:       stateData = &SD_DEFINE_SelectedNode;       break;
+    case DEFINE_NotInCourse:        stateData = &SD_DEFINE_NotInCourse;        break;
+    case DEFINE_InCourse:           stateData = &SD_DEFINE_InCourse;           break;
+    case FINISHED_SuccessfulRun:    stateData = &SD_FINISHED_SuccessfulRun;    break;
+    case FINISHED_UnsuccessfulRun:  stateData = &SD_FINISHED_UnsuccessfulRun;  break;
+  }
+  state = newState;
+  writeLed(*(stateData->colorIdle));
 }
 
 /* ************************* */
