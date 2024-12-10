@@ -12,12 +12,31 @@
 #define EEPROM_SIZE 512
 #define NOOP __asm__("nop\n\t");
 
+// Prototypes
+struct StateData;
+struct OutboundMessage;
+struct Color;
+OutboundMessage createOutboundMessage(char type, uint32_t data);
+void processIncomingMessage(String msg);
+void touchpadCallback(void* param);
+void sendMessage(OutboundMessage msg);
+void rfListen(void* param);
+void messageLoop(void* param);
+uint32_t currentTimeAbs();
+uint32_t currentTime();
+void writeLed(Color color);
+
+// State globals
+unsigned short id = 9;
+bool touched = false;
+uint32_t timestampLastReset = 0; 
+
 // Defined types
-typedef struct {
+struct OutboundMessage {
   short type;
   short id;
   uint32_t data;
-} OutboundMessage;
+};
 
 struct Color {
   char r;
@@ -30,16 +49,11 @@ struct Color {
   }
 };
 
-// Prototypes
-OutboundMessage createOutboundMessage(char type, uint32_t data);
-void processIncomingMessage(String msg);
-void touchpadCallback(void* param);
-void sendMessage(OutboundMessage msg);
-void rfListen(void* param);
-void messageLoop(void* param);
-uint32_t currentTimeAbs();
-uint32_t currentTime();
-void writeLed(Color color);
+struct StateData {
+  bool receptiveToTouch;
+  Color colorIdle;
+  Color colorOnTouch;
+};
 
 // Hardware constants
 const touch_pad_t tpPin = TOUCH_PAD_NUM7;
@@ -60,11 +74,6 @@ const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
 const char MTYPE_ACKREADY       = 111;
 
-// State globals
-unsigned short id = 9;
-bool touched = false;
-uint32_t timestampLastReset = 0; 
-
 // Other globals
 NetworkModule module;
 WiFiClient socket;
@@ -82,6 +91,19 @@ Color colorInitializedModule = Color(0, 255, 0);
 Color colorTouched = Color(255, 255, 255);
 Color colorSilence = Color(0, 0, 0);
 Color colorReady = Color(255, 35, 0);
+
+typedef enum _State {
+  READYRUN_StartNode,         // Starting node for a course. When it's touched, server will move into RUN state
+  READYRUN_NotPartOfCourse,   // In ready/run mode: the node IS NOT part of the active course
+  READYRUN_NoTriggersDone,    // In ready/run mode: the node is part of the active course, but has not yet been triggered a single time
+  READYRUN_SomeTriggersDone,  // In ready/run mode: the node is part of the active course, and has been triggered, but the node re-appears later in the course so it will need to be triggered again
+  READYRUN_AllTriggersDone,   // In ready/run mode: the node IS part of the active course, and has been triggered, and does not appear later in the course
+  DEFINE_SelectedNode,        // In edit mode: the most-recently selected node
+  DEFINE_NotInCourse,         // In edit mode: a node which has not been added to the course, but is able to be added
+  DEFINE_InCourse,            // In edit mode: a node which has been added to the course, and is able to be added again
+  FINISHED_SuccessfulRun,     // In finished mode: the run was successful
+  FINISHED_UnsuccessfulRun    // In finished mode: the run was unsuccessful
+} State;
 
 void setup() {
 
