@@ -14,10 +14,13 @@
 #define EEPROM_SIZE 512
 #define NOOP __asm__("nop\n\t");
 
-unsigned short id = 9;            // ID of the node. TODO Move this to EEPROM
+unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
 
 typedef enum _State {
   INIT_BootStart,             // State set immediately upon module boot
+  INIT_WaitingWifi,           // While waiting for wifi connection
+  INIT_WaitingServer,         // While waiting for server connection
+  INIT_Complete,              // Connected to server, awaiting instructions
   READYRUN_StartNode,         // Starting node for a course. When it's touched, server will move into RUN state
   READYRUN_NotPartOfCourse,   // In ready/run mode: the node IS NOT part of the active course
   READYRUN_NoTriggersDone,    // In ready/run mode: the node is part of the active course, but has not yet been triggered a single time
@@ -87,7 +90,7 @@ const char MTYPE_REGISTER       = 2;
 const char MTYPE_TOUCHED        = 100;
 const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
-const char MTYPE_ACKREADY       = 111;
+const char MTYPE_ACK            = 111;
 
 // Other globals
 NetworkModule module;
@@ -98,18 +101,6 @@ std::queue<OutboundMessage> outboundMessageQueue;
 const char* HOST = "192.168.1.111";
 const uint16_t PORT = 5000;
 
-// Colors
-Color colorCyan     = Color(0, 150, 150);
-Color colorWhite    = Color(255, 255, 255);
-
-Color colorBootup = Color(255, 255, 255);
-Color colorWaitingForWifiConnection = Color(255, 0, 0);
-Color colorWaitingForServerConnection = Color(0, 0, 255);
-Color colorInitializedModule = Color(0, 255, 0);
-Color colorTouched = Color(255, 255, 255);
-Color colorSilence = Color(0, 0, 0);
-Color colorReady = Color(255, 35, 0);
-
 // State globals
 bool touched = false;             // Helper variable to track if the node has been triggered. Must be reset by server
 uint32_t timestampLastReset = 0;  // Timestamp when the node received the most recent RF broadcast
@@ -118,7 +109,7 @@ StateData* stateData = nullptr;   // ... Data of the current state...
 
 void setup() {
 
-  // Setup
+  // Hardware setup
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
   pinMode(rfReceivePin, INPUT);
@@ -126,23 +117,11 @@ void setup() {
   ledcAttach(ledRedPin, 5000, 8);
   ledcAttach(ledGreenPin, 5000, 8);
   ledcAttach(ledBluePin, 5000, 8);
-  writeLed(colorBootup);
   digitalWrite(speakerPin, HIGH);
-  sleep(2);
-  Serial.printf("--- initialized ---\n");
-  Serial.printf("  PACKET SIZE: %d\n", sizeof(OutboundMessage));
-  dumpEeprom();
-
-  sleep(1);
-
-  // Load wifi network info
-  readEeprom((char*)&module, 0, sizeof(NetworkModule));
-  Serial.printf("Read SSID from EEPROM: %s\n", module.networkSsid);
-  Serial.printf("Read Password from EEPROM: %s\n", module.networkPassword);
-
-  writeLed(colorWaitingForWifiConnection);
+  readEeprom((char*)&module, 0, sizeof(NetworkModule)); // Load EEPROM
 
   // Connect to wifi
+  setState(INIT_WaitingWifi);
   WiFi.begin(module.networkSsid, module.networkPassword);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.printf(".");
@@ -150,9 +129,9 @@ void setup() {
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString().c_str());
 
-  writeLed(colorWaitingForServerConnection);
 
   // Connect to socket
+  setState(INIT_WaitingServer);
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
   while(!socket.connect(HOST, PORT)) {
     Serial.printf(".");
@@ -160,12 +139,9 @@ void setup() {
   }
   Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
 
-  writeLed(colorInitializedModule);
-
   Serial.printf("starting tasks\n");
-
-  // Start message loop on core 0
-  xTaskCreatePinnedToCore(
+  setState(INIT_Complete);
+  xTaskCreatePinnedToCore(        // Message loop on core 0
     messageLoop,      /* Task function. */
     "Message_Loop",   /* name of task. */
     16384,            /* Stack size of task */
@@ -175,9 +151,7 @@ void setup() {
     0);               /* pin task to core 0 */
   Serial.printf("started message loop\n");
 
-
-  // Start RF receiver on core 1
-  xTaskCreatePinnedToCore(
+  xTaskCreatePinnedToCore(        // RF receiver loop on core 1
     rfListen,         /* Task function. */
     "RF_Listen",      /* name of task. */
     16384,            /* Stack size of task */
@@ -227,7 +201,9 @@ void touchpadCallback() {
   if (!touched) {
     touched = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, currentTime()));
-    writeLed(*(stateData->colorOnTouch));
+    if (stateData->colorOnTouch) {
+      writeLed(*(stateData->colorOnTouch));
+    }
   }
 }
 
@@ -249,23 +225,19 @@ void processIncomingMessage(std::string msg) {
     esp_restart();
   }
 
-  if (word == "SET_STATE") {
-    std::getline(iss, word, ' '); // Read the second word
-    setState(parseStateName(word));
-    return;
+  if (word == "REQ_ACK") { // Server is requesting an ACK; send it, then continue
+    outboundMessageQueue.push(createOutboundMessage(MTYPE_ACK, currentTime()));
+    std::getline(iss, word, ' ');
   }
 
-  if (msg == "RESET") {
+  if (word == "UNTOUCH") {
     touched = false;
-    writeLed(colorSilence);
+    writeLed(*(stateData->colorIdle));
   }
-  if (msg == "SILENCE") {
-    writeLed(colorSilence);
-  }
-  if (msg == "READY") {
-    touched = false;
-    outboundMessageQueue.push(createOutboundMessage(MTYPE_ACKREADY, currentTime()));
-    writeLed(colorReady);
+
+  if (word == "SET_STATE") {
+    std::getline(iss, word, ' '); // Second word tells us 
+    setState(parseStateName(word));
   }
 }
 
@@ -361,16 +333,29 @@ void rfListen(void* param) {
 /* ************************* */
 // ... ugh
 
-StateData SD_READYRUN_StartNode         = StateData(&colorCyan, &colorWhite);
-StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorCyan, &colorWhite);
-StateData SD_READYRUN_NoTriggersDone    = StateData(&colorCyan, &colorWhite);
-StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorCyan, &colorWhite);
-StateData SD_READYRUN_AllTriggersDone   = StateData(&colorCyan, &colorWhite);
-StateData SD_DEFINE_SelectedNode        = StateData(&colorCyan, &colorWhite);
-StateData SD_DEFINE_NotInCourse         = StateData(&colorCyan, &colorWhite);
-StateData SD_DEFINE_InCourse            = StateData(&colorCyan, &colorWhite);
-StateData SD_FINISHED_SuccessfulRun     = StateData(&colorCyan, &colorWhite);
-StateData SD_FINISHED_UnsuccessfulRun   = StateData(&colorCyan, &colorWhite);
+// Colors
+Color colorOff        = Color(  0,   0,   0);
+Color colorRed        = Color(255,   0,   0);
+Color colorGreen      = Color(  0, 255,   0);
+Color colorBlue       = Color(  0,   0, 255);
+Color colorCyan       = Color(  0, 150, 150);
+Color colorDimOrange  = Color(255,  35,   0);
+Color colorWhite      = Color(255, 255, 255);
+//                                                  Standby     On-touch
+StateData SD_INIT_BootStart             = StateData(&colorCyan,         nullptr);
+StateData SD_INIT_WaitingWifi           = StateData(&colorRed,          nullptr);
+StateData SD_INIT_WaitingServer         = StateData(&colorBlue,         nullptr);
+StateData SD_INIT_Complete              = StateData(&colorGreen,        &colorWhite);
+StateData SD_READYRUN_StartNode         = StateData(&colorBlue,         &colorWhite);
+StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorOff,          &colorRed);
+StateData SD_READYRUN_NoTriggersDone    = StateData(&colorRed,          &colorWhite);
+StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorWhite);
+StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorWhite);
+StateData SD_DEFINE_SelectedNode        = StateData(&colorWhite,        nullptr);
+StateData SD_DEFINE_NotInCourse         = StateData(&colorRed,          &colorWhite);
+StateData SD_DEFINE_InCourse            = StateData(&colorDimOrange,    &colorWhite);
+StateData SD_FINISHED_SuccessfulRun     = StateData(&colorGreen,        nullptr);
+StateData SD_FINISHED_UnsuccessfulRun   = StateData(&colorOff,          nullptr);
 
 State parseStateName(std::string stateName) {
   if      (stateName == "READYRUN_StartNode")         return READYRUN_StartNode;
@@ -387,6 +372,9 @@ State parseStateName(std::string stateName) {
 
 void setState(State newState) {
   switch(newState) {
+    case INIT_WaitingWifi:          stateData = &SD_INIT_WaitingWifi;          break;   
+    case INIT_WaitingServer:        stateData = &SD_INIT_WaitingServer;        break;   
+    case INIT_Complete:             stateData = &SD_INIT_Complete;             break;       
     case READYRUN_StartNode:        stateData = &SD_READYRUN_StartNode;        break;
     case READYRUN_NotPartOfCourse:  stateData = &SD_READYRUN_NotPartOfCourse;  break;
     case READYRUN_NoTriggersDone:   stateData = &SD_READYRUN_NoTriggersDone;   break;
@@ -398,7 +386,9 @@ void setState(State newState) {
     case FINISHED_SuccessfulRun:    stateData = &SD_FINISHED_SuccessfulRun;    break;
     case FINISHED_UnsuccessfulRun:  stateData = &SD_FINISHED_UnsuccessfulRun;  break;
   }
+  Serial.printf("SetState (previous %d, new %d)\n", state, newState);
   state = newState;
+  touched = false;
   writeLed(*(stateData->colorIdle));
 }
 

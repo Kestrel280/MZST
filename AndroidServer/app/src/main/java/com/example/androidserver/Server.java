@@ -184,7 +184,6 @@ public class Server {
 
         public void postPromise(Promise promise) {
             this.promises.add(promise);
-            Log.i("server", String.format("Handler %s registered Promise with id=%d, mtype=%d: LL looks like ", this.name, promise.clientId, promise.mType) + this.promises);
         }
 
         // Blocks the caller until the handler receives a message from a specific client of a specific type.
@@ -205,7 +204,6 @@ public class Server {
                 while (!newClientsQueue.isEmpty()) {
                     Client newClient = newClientsQueue.remove();
                     clients.put(newClient.id, newClient); // TODO this will overwrite any client with same id. may want to add a warning
-                    Log.i("server", String.format("%s registered client %d", this.name, newClient.id));
                 }
 
                 while (!outboundMessageQueue.isEmpty()) {
@@ -228,15 +226,13 @@ public class Server {
                     for (ClientMessage inboundMessage : inboundMessages) {
                         response = processMessage(inboundMessage);
                         for (Promise promise : promises) {
-                            Log.i("server", String.format("   Checking if received message (id%d, mtype%d) matches promise(id%d, mype%d)...", inboundMessage.id, inboundMessage.code, promise.clientId, promise.mType));
                             if ((inboundMessage.id == promise.clientId) && (inboundMessage.code == promise.mType)) {
                                 promise.msg = inboundMessage;
                                 promise.resolved = true;
                                 promises.remove(promise);
-                                Log.i("server", "   Matched and removed");
                             }
                         }
-                        client.sendMessage(response);
+                        if (response != null) client.sendMessage(response);
                     }
                 }
             } while (!shutdown);
@@ -248,15 +244,14 @@ public class Server {
     /* ************************ */
 
     private ServerMessage processMessage(ClientMessage cMsg) {
-        ServerMessage response = new ServerMessage("ACK");
+        ServerMessage response = null;
 
         switch (cMsg.code) {
             case ClientMessage.MTYPE_TRIGGER: {
-                actionHandler.processAction(
+                response = actionHandler.processAction(
                         new ServerAction(ActionType.TRIGGER)
                                 .setClientId(cMsg.id)
                                 .setTimestamp(cMsg.data));
-                response.text = "RESET";
                 break;
             }
             default: break;
@@ -289,6 +284,7 @@ public class Server {
     /* ************************ */
 
     public void createNewCourse() {
+        nodeHandler.postBroadcast(new ServerMessage("SET_STATE DEFINE_NotInCourse"));
         this.currentCourse = new Course();
     }
 
@@ -298,19 +294,53 @@ public class Server {
         // TODO save to database
     }
 
+    public void addCourseNode(int nodeId) {
+        // Check to make sure there is a previously-touched node. If so, set its state to DEFINE_InCourse
+        if (!currentCourse.nodeSequence.isEmpty()) {
+
+            // If nodeId is already the last node in the course, send it an UNTOUCH message and then short-circuit
+            if (currentCourse.nodeSequence.get(currentCourse.nodeSequence.size() - 1) == nodeId) {
+                nodeHandler.postMsg(nodeId, new ServerMessage("UNTOUCH"));
+                return;
+            }
+
+            nodeHandler.postMsg(
+                    currentCourse.nodeSequence.get(currentCourse.nodeSequence.size() - 1),
+                    new ServerMessage("SET_STATE DEFINE_InCourse"));
+        }
+
+        // Now set the state of the newly touched node to DEFINE_SelectedNode
+        nodeHandler.postMsg(nodeId, new ServerMessage("SET_STATE DEFINE_SelectedNode"));
+
+        // Finally, add the node to the course
+        currentCourse.addNode(nodeId);
+    }
+
     public void prepCurrentCourse() {
         Promise promise;
-        nodeHandler.postBroadcast(new ServerMessage("SILENCE"));
         transmitterHandler.postBroadcast(new ServerMessage("TRANSMIT"));
 
-        for (int nodeId : currentCourse.nodeSequence) {
-            promise = new Promise(nodeId, ClientMessage.MTYPE_ACKREADY);
+        // Set the state of each node, one by one
+        // Wait for an ACK between each message
+        // The FIRST course node (currentCourse.nodeSequence.first()) gets "SET_STATE READYRUN_StartNode"
+        // Rest of the course nodes get "SET_STATE READYRUN_NoTriggersDone"
+        // Everything else gets "SET_STATE READYRUN_NotPartOfCourse"
+        for (Client client : nodeHandler.clients.values()) {
+            Log.i("debug", "prepping node " + client.id);
+            promise = new Promise(client.id, ClientMessage.MTYPE_ACK);
             nodeHandler.postPromise(promise);
-            nodeHandler.postMsg(nodeId, new ServerMessage("READY"));
-            Log.i("server", "blocking until ACK READY message received from client " + nodeId);
+
+            if (currentCourse.nodeSequence.get(0) == client.id) {
+                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_StartNode"));
+            } else if (currentCourse.nodeSequence.contains(client.id)) {
+                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_NoTriggersDone"));
+            } else {
+                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_NotPartOfCourse"));
+            }
+
+            Log.i("debug", "blocking on ack from " + client.id);
             nodeHandler.awaitPromise(promise);
-            //TODO await for ACK_TRANSMIT as well
-            Log.i("server", " UNBLOCKING !!!");
+            Log.i("debug", "ack received from " + client.id);
         }
     }
 

@@ -2,8 +2,6 @@ package com.example.androidserver;
 
 import static com.example.androidserver.Server.ServerState.*;
 
-import android.util.Log;
-
 import com.example.androidserver.Server.ServerState;
 
 public class ActionHandler {
@@ -17,26 +15,26 @@ public class ActionHandler {
     //  which should index into a database and retrieve a Course
 
     // Main dispatch
-    public ServerState processAction(ServerAction action) {
+    public ServerMessage processAction(ServerAction action) {
         ServerState newState;
-        Log.i("actionhandler", "Action handler processing action of type " + action.type.toString());
+        ServerMessage response = null;
         switch (server.getState()) {
             case DEFINE:    newState = doDefine(action); break;
             case RUN:       newState = doRun(action); break;
-            case IDLE:      newState = doIdle(action); break;
+            case IDLE:      newState = doIdle(action); response = new ServerMessage("UNTOUCH"); break;
             case READY:     newState = doReady(action); break;
             case FINISHED:  newState = doFinished(action); break;
             default: newState = server.getState();
         }
         server.setState(newState);
-        return newState;
+        return response;
     }
 
     // Individual state dispatches
     public ServerState doIdle(ServerAction action) {
         switch (action.type) {
             case NEW:
-                server.createNewCourse();
+                server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
             default: break;
@@ -59,16 +57,16 @@ public class ActionHandler {
         switch (action.type) {
             case NEW:
                 // TODO prompt if want to save current course
-                server.createNewCourse();
+                server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
             case RESET: break;
             case TRIGGER:
-                server.currentCourse.addNode(action.clientId);
+                server.addCourseNode(action.clientId); // Handles setting state of nodes
                 return DEFINE;
             case SAVE:
                 server.saveCurrentCourse();
-                server.prepCurrentCourse();
+                server.prepCurrentCourse(); // Handles setting state of nodes
                 return READY;
             default: break;
         }
@@ -79,7 +77,7 @@ public class ActionHandler {
     public ServerState doReady(ServerAction action) {
         switch (action.type) {
             case NEW:
-                server.createNewCourse();
+                server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
             case START: break;
@@ -92,7 +90,7 @@ public class ActionHandler {
     public ServerState doFinished(ServerAction action) {
         switch (action.type) {
             case NEW:
-                server.createNewCourse();
+                server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case RESET: break;
             case LOAD: break;

@@ -20,9 +20,11 @@ public class Course {
     }
 
     public Course addNode(int nodeId) {
+        // Called from Server.addCourseNode(), which also handles setting state of nodes
         if (this.editing) {
             this.nodeSequence.add(nodeId);
         }
+        MainActivity.debugMsgToAppView("Current course: " + this.nodeSequence.toString(), "debug");
         Log.i("course", String.format("Course %d added node %d; course is now", this.id, nodeId) + this.nodeSequence.toString());
         return this;
     }
@@ -30,12 +32,6 @@ public class Course {
     public Course finishEditing() {
         this.editing = false;
 
-        // Remove any contiguous duplicates
-        for (int i = this.nodeSequence.size() - 1; i > 0; i--) {
-            if (this.nodeSequence.get(i).equals(this.nodeSequence.get(i - 1))) {
-                this.nodeSequence.remove(i);
-            }
-        }
         MainActivity.debugMsgToAppView("Finished editing course with sequence " + this.nodeSequence.toString(), "debug");
         Log.i("course", String.format("Finished editing course %d: sequence is ", this.id) + this.nodeSequence.toString());
         return this;
