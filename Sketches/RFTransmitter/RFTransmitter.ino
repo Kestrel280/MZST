@@ -124,5 +124,6 @@ void transmit() {
     mask = mask >> 1;
     delay(rfPulseIntervalMs); // Delay for the pulse duration
   }
+  digitalWrite(transmitPin, LOW);
   Serial.printf(" Done\n");
 }

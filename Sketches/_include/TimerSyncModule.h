@@ -3,7 +3,7 @@
 
 const unsigned int rfKey = 0b10101011001100101111110001011010;
 
-const int rfPulseIntervalMs = 400; // Milliseconds
+const int rfPulseIntervalMs = 3; // Milliseconds
 
 const int rfKeyRequiredMatches = 24; // 
 
