@@ -13,7 +13,7 @@
 #define SERIAL_BAUDRATE 921600
 #define NOOP __asm__("nop\n\t");
 
-unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
+unsigned short id = 9;            // ID of the node. TODO Move this to EEPROM
 
 typedef enum _State {
   INIT_BootStart,             // State set immediately upon module boot
@@ -23,6 +23,7 @@ typedef enum _State {
   READYRUN_StartNode,         // Starting node for a course. When it's touched, server will move into RUN state
   READYRUN_NotPartOfCourse,   // In ready/run mode: the node IS NOT part of the active course
   READYRUN_NoTriggersDone,    // In ready/run mode: the node is part of the active course, but has not yet been triggered a single time
+  READYRUN_NextUp,            // In ready/run mode: the node is part of the active course, and is the next node which must be triggered
   READYRUN_SomeTriggersDone,  // In ready/run mode: the node is part of the active course, and has been triggered, but the node re-appears later in the course so it will need to be triggered again
   READYRUN_AllTriggersDone,   // In ready/run mode: the node IS part of the active course, and has been triggered, and does not appear later in the course
   DEFINE_SelectedNode,        // In edit mode: the most-recently selected node
@@ -128,6 +129,7 @@ void setup() {
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString().c_str());
 
+  sleep(2); // Pause a couple seconds... gives us time to restart/update the server if we just reset from a SHUTDOWN message
 
   // Connect to socket
   setState(INIT_WaitingServer);
@@ -308,13 +310,13 @@ void rfListen(void* param) {
     matchedBits = countSetBits(~(buf ^ rfKey));
 
     // Debug: print the buf
-    //debugMask = 0b10000000000000000000000000000000;
-    //for (int i = 0; i < 32; i++) {
-    //  Serial.printf("%d", (buf & debugMask) > 0);
-    //  debugMask = debugMask >> 1;
-    //}
-    //Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
-    //Serial.printf("\n");
+    debugMask = 0b10000000000000000000000000000000;
+    for (int i = 0; i < 32; i++) {
+      Serial.printf("%d", (buf & debugMask) > 0);
+      debugMask = debugMask >> 1;
+    }
+    Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
+    Serial.printf("\n");
     
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
@@ -337,7 +339,8 @@ Color colorOff        = Color(  0,   0,   0);
 Color colorRed        = Color(255,   0,   0);
 Color colorGreen      = Color(  0, 255,   0);
 Color colorBlue       = Color(  0,   0, 255);
-Color colorCyan       = Color(  0, 150, 150);
+Color colorPurple     = Color(100,   0, 100);
+Color colorCyan       = Color(  0, 100, 100);
 Color colorDimOrange  = Color(255,  35,   0);
 Color colorWhite      = Color(255, 255, 255);
 //                                                  Standby     On-touch
@@ -345,12 +348,12 @@ StateData SD_INIT_BootStart             = StateData(&colorCyan,         nullptr)
 StateData SD_INIT_WaitingWifi           = StateData(&colorRed,          nullptr);
 StateData SD_INIT_WaitingServer         = StateData(&colorBlue,         nullptr);
 StateData SD_INIT_Complete              = StateData(&colorGreen,        &colorWhite);
-StateData SD_READYRUN_StartNode         = StateData(&colorBlue,         &colorWhite);
+StateData SD_READYRUN_StartNode         = StateData(&colorPurple,       &colorWhite);
 StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorOff,          &colorRed);
 StateData SD_READYRUN_NoTriggersDone    = StateData(&colorRed,          &colorWhite);
-StateData SD_READYRUN_NextUp            = StateData(&colorDimOrange,    &colorWhite);
-StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorWhite);
-StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorWhite);
+StateData SD_READYRUN_NextUp            = StateData(&colorBlue,         &colorWhite);
+StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorRed);
+StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorRed);
 StateData SD_DEFINE_SelectedNode        = StateData(&colorWhite,        nullptr);
 StateData SD_DEFINE_NotInCourse         = StateData(&colorRed,          &colorWhite);
 StateData SD_DEFINE_InCourse            = StateData(&colorDimOrange,    &colorWhite);
@@ -361,6 +364,7 @@ State parseStateName(std::string stateName) {
   if      (stateName == "READYRUN_StartNode")         return READYRUN_StartNode;
   else if (stateName == "READYRUN_NotPartOfCourse")   return READYRUN_NotPartOfCourse;
   else if (stateName == "READYRUN_NoTriggersDone")    return READYRUN_NoTriggersDone;
+  else if (stateName == "READYRUN_NextUp")            return READYRUN_NextUp;
   else if (stateName == "READYRUN_SomeTriggersDone")  return READYRUN_SomeTriggersDone;
   else if (stateName == "READYRUN_AllTriggersDone")   return READYRUN_AllTriggersDone;
   else if (stateName == "DEFINE_SelectedNode")        return DEFINE_SelectedNode;

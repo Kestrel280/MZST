@@ -360,11 +360,12 @@ public class Server {
         // Returns true if the course is finished (whether or not it's a successful run), false otherwise
 
         // If the correct node was hit, remove it from currentCourseRemainingNodes
-        // If the INCORRECT node was hit, broadcast failure to nodes and return true
         if (currentCourseRemainingNodes.get(0) == nodeId) {
             currentCourseRemainingNodes.remove(0);
-        } else {
-            nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
+        }
+        // If the INCORRECT node was hit, broadcast failure to nodes and return true
+        else {
+            //nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
             return false;
         }
 

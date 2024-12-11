@@ -8,7 +8,7 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
-unsigned short id = 5;            // ID of the transmitter. TODO Move this to EEPROM
+unsigned short id = 21;            // ID of the transmitter. TODO Move this to EEPROM
 
 struct OutboundMessage {
   short type;
