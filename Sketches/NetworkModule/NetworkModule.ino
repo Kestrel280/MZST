@@ -11,7 +11,6 @@
 #include "esp32-hal-touch.h"
 
 #define SERIAL_BAUDRATE 921600
-#define EEPROM_SIZE 512
 #define NOOP __asm__("nop\n\t");
 
 unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM

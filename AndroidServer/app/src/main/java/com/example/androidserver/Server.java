@@ -126,7 +126,6 @@ public class Server {
                         registrationMessage = client.readMessage();
                     }
                     client.id = registrationMessage.id;
-                    Log.i("debug", String.format("connected client id is %d", client.id));
 
                     switch (registrationMessage.code) {
                         case ClientMessage.MTYPE_REGISTER_USER: client.setType(Client.USER); userHandler.registerClient(client, registrationMessage.data); break;
@@ -169,7 +168,7 @@ public class Server {
         }
 
         public void registerClient(Client client, int data) {
-            Log.i("server", String.format("Registering client %d of type %d with data %d", client.id, client.type, data));
+            Log.i("server", String.format("%s registering client %d of type %d with data %d", this.name, client.id, client.type, data));
             MainActivity.debugMsgToAppView(String.format("%s registering client %d of type %d w/ data = %d", this.name, client.id, client.type, data), "debug");
             newClientsQueue.add(client);
         }
@@ -318,7 +317,7 @@ public class Server {
 
     public void prepCurrentCourse() {
         Promise promise;
-        transmitterHandler.postBroadcast(new ServerMessage("TRANSMIT"));
+        transmitterHandler.postBroadcast(new ServerMessage("REQ_ACK TRANSMIT"));
 
         // Set the state of each node, one by one
         // Wait for an ACK between each message
@@ -338,9 +337,7 @@ public class Server {
                 nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_NotPartOfCourse"));
             }
 
-            Log.i("debug", "blocking on ack from " + client.id);
             nodeHandler.awaitPromise(promise);
-            Log.i("debug", "ack received from " + client.id);
         }
     }
 

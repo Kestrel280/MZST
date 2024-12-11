@@ -3,6 +3,8 @@
 
 #include <EEPROM.h>
 
+#define EEPROM_SIZE 512
+
 void dumpEeprom() {
   const int bytesPerRow = 32;
   int i = 0;
