@@ -348,6 +348,7 @@ StateData SD_INIT_Complete              = StateData(&colorGreen,        &colorWh
 StateData SD_READYRUN_StartNode         = StateData(&colorBlue,         &colorWhite);
 StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorOff,          &colorRed);
 StateData SD_READYRUN_NoTriggersDone    = StateData(&colorRed,          &colorWhite);
+StateData SD_READYRUN_NextUp            = StateData(&colorDimOrange,    &colorWhite);
 StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorWhite);
 StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorWhite);
 StateData SD_DEFINE_SelectedNode        = StateData(&colorWhite,        nullptr);

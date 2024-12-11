@@ -49,7 +49,9 @@ public class ActionHandler {
                 boolean finished;
                 finished = server.advanceCourse(action.clientId, action.data); // Returns true if this action finishes the course. Handles setting state of nodes (incl. SUCCESS or FAILURE of course)
                 return finished ? FINISHED : RUN;
-            case RESET: break;
+            case RESET:
+                server.prepCurrentCourse();
+                return READY;
             default: break;
         }
 
@@ -58,12 +60,12 @@ public class ActionHandler {
 
     public ServerState doDefine(ServerAction action) {
         switch (action.type) {
+            case RESET: /* fallthrough */
             case NEW:
                 // TODO prompt if want to save current course
                 server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
-            case RESET: break;
             case TRIGGER:
                 server.addCourseNode(action.clientId); // Handles setting state of nodes
                 return DEFINE;
@@ -98,7 +100,9 @@ public class ActionHandler {
             case NEW:
                 server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
-            case RESET: break;
+            case RESET:
+                server.prepCurrentCourse();
+                return READY;
             case LOAD: break;
             default: break;
         }
