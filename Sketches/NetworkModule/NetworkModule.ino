@@ -310,13 +310,13 @@ void rfListen(void* param) {
     matchedBits = countSetBits(~(buf ^ rfKey));
 
     // Debug: print the buf
-    debugMask = 0b10000000000000000000000000000000;
-    for (int i = 0; i < 32; i++) {
-      Serial.printf("%d", (buf & debugMask) > 0);
-      debugMask = debugMask >> 1;
-    }
-    Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
-    Serial.printf("\n");
+    //debugMask = 0b10000000000000000000000000000000;
+    //for (int i = 0; i < 32; i++) {
+    //  Serial.printf("%d", (buf & debugMask) > 0);
+    //  debugMask = debugMask >> 1;
+    //}
+    //Serial.printf(" (%d / %d)", matchedBits, rfKeyRequiredMatches);
+    //Serial.printf("\n");
     
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
