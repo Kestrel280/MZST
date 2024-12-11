@@ -362,26 +362,27 @@ public class Server {
         // If the correct node was hit, remove it from currentCourseRemainingNodes
         if (currentCourseRemainingNodes.get(0) == nodeId) {
             currentCourseRemainingNodes.remove(0);
-        }
-        // If the INCORRECT node was hit, broadcast failure to nodes and return true
-        else {
-            //nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
+
+            // Check for win
+            if (currentCourseRemainingNodes.isEmpty()) {
+                nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_SuccessfulRun"));
+                return true;
+            }
+
+            // No win; update status of this node and continue
+            if (currentCourseRemainingNodes.contains(nodeId)) {
+                nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_SomeTriggersDone"));
+            } else {
+                nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_AllTriggersDone"));
+            }
             return false;
         }
-
-        // We haven't failed the course, so check if we've finished it successfully
-        if (currentCourseRemainingNodes.isEmpty()) {
-            nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_SuccessfulRun"));
-             return true;
+        // If the INCORRECT node was hit, untrigger it
+        else {
+            //nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
+            nodeHandler.postBroadcast(new ServerMessage("UNTOUCH"));
+            return false;
         }
-
-        // We haven't failed the course, but we also haven't finished it
-        if (currentCourseRemainingNodes.contains(nodeId)) {
-            nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_SomeTriggersDone"));
-        } else {
-            nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_AllTriggersDone"));
-        }
-        return false;
     }
 
     /* *****************************
