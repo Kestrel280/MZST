@@ -85,6 +85,7 @@ public class ActionHandler {
                 server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
+            case TRIGGER: /* fallthrough */
             case START:
                 boolean finished;
                 finished = server.advanceCourse(action.clientId, action.data); // Returns true if this action finishes the course. Handles setting state of nodes (incl. SUCCESS or FAILURE of course)
