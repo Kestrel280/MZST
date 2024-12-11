@@ -4,7 +4,7 @@ public class ServerAction {
     public ActionType type;
     public int clientId;
     public int requesterId;
-    public long timestamp;
+    public long data;
     public int courseId;
 
     public enum ActionType {
@@ -26,8 +26,8 @@ public class ServerAction {
         this.clientId = id;
         return this;
     }
-    public ServerAction setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public ServerAction setData(long data) {
+        this.data = data;
         return this;
     }
     public ServerAction setRequesterId(int id) {

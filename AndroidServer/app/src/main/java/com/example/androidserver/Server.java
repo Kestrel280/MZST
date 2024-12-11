@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,6 +25,7 @@ public class Server {
     public static final int PORT = 5000;
 
     public Course currentCourse;
+    public ArrayList<Integer> currentCourseRemainingNodes;
 
     private ServerState state;
     private ActionHandler actionHandler;
@@ -37,6 +39,7 @@ public class Server {
     private Thread nodeHandlerThread;
     private Thread transmitterHandlerThread;
     private Thread connectionListenerThread;
+
 
     /* ************************ */
     /*           Enums          */
@@ -244,13 +247,22 @@ public class Server {
 
     private ServerMessage processMessage(ClientMessage cMsg) {
         ServerMessage response = null;
-
         switch (cMsg.code) {
             case ClientMessage.MTYPE_TRIGGER: {
+
+                // TODO Placeholder for later.
+                //      If server is READY,
+                //      and a TRIGGER message is received,
+                //      and it's from the first node in the current course,
+                //      interpret it as a START message.
+                //      This should be integrated into the sensor packages later, such that they send dedicated START messages.
+                ActionType type = (state == ServerState.READY && cMsg.id == currentCourse.nodeSequence.get(0) ? ActionType.START : ActionType.TRIGGER);
+
                 response = actionHandler.processAction(
-                        new ServerAction(ActionType.TRIGGER)
+                        //new ServerAction(ActionType.TRIGGER).
+                        new ServerAction(type)
                                 .setClientId(cMsg.id)
-                                .setTimestamp(cMsg.data));
+                                .setData(cMsg.data));
                 break;
             }
             default: break;
@@ -339,6 +351,36 @@ public class Server {
 
             nodeHandler.awaitPromise(promise);
         }
+
+        currentCourseRemainingNodes = new ArrayList<>(currentCourse.nodeSequence);
+    }
+
+    public boolean advanceCourse(int nodeId, long timestamp) {
+        // Tries to update the state of the current course being run (currentCourseRemainingNodes)
+        // Returns true if the course is finished (whether or not it's a successful run), false otherwise
+
+        // If the correct node was hit, remove it from currentCourseRemainingNodes
+        // If the INCORRECT node was hit, broadcast failure to nodes and return true
+        if (currentCourseRemainingNodes.get(0) == nodeId) {
+            currentCourseRemainingNodes.remove(0);
+        } else {
+            nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
+            return false;
+        }
+
+        // We haven't failed the course, so check if we've finished it successfully
+        if (currentCourseRemainingNodes.isEmpty()) {
+            nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_SuccessfulRun"));
+             return true;
+        }
+
+        // We haven't failed the course, but we also haven't finished it
+        if (currentCourseRemainingNodes.contains(nodeId)) {
+            nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_SomeTriggersDone"));
+        } else {
+            nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_AllTriggersDone"));
+        }
+        return false;
     }
 
     /* *****************************

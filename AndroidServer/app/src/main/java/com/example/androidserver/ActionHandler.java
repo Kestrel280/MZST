@@ -45,7 +45,10 @@ public class ActionHandler {
 
     public ServerState doRun(ServerAction action) {
         switch (action.type) {
-            case TRIGGER: break;
+            case TRIGGER:
+                boolean finished;
+                finished = server.advanceCourse(action.clientId, action.data); // Returns true if this action finishes the course. Handles setting state of nodes (incl. SUCCESS or FAILURE of course)
+                return finished ? FINISHED : RUN;
             case RESET: break;
             default: break;
         }
@@ -80,7 +83,10 @@ public class ActionHandler {
                 server.createNewCourse(); // Handles setting state of nodes
                 return DEFINE;
             case LOAD: break;
-            case START: break;
+            case START:
+                boolean finished;
+                finished = server.advanceCourse(action.clientId, action.data); // Returns true if this action finishes the course. Handles setting state of nodes (incl. SUCCESS or FAILURE of course)
+                return finished ? FINISHED : RUN;
             default: break;
         }
 
