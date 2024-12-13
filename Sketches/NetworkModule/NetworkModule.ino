@@ -1,3 +1,4 @@
+#include <deque>
 #include <string>
 #include <sstream>
 #include <queue>
@@ -10,6 +11,11 @@
 #include "esp_system.h"
 #include "esp32-hal-touch.h"
 
+#include "MODEL2.h"
+#include <tflm_esp32.h>
+#include <eloquent_tinyml.h>
+
+#define TOUCH_BUFSIZE 25
 #define SERIAL_BAUDRATE 921600
 #define NOOP __asm__("nop\n\t");
 
@@ -72,6 +78,10 @@ void messageLoop(void* param);
 uint32_t currentTimeAbs();
 uint32_t currentTime();
 void writeLed(Color color);
+uint32_t dequeMax(std::deque<uint32_t> d);
+uint32_t dequeMin(std::deque<uint32_t> d);
+uint32_t dequeAvg(std::deque<uint32_t> d);
+uint32_t dequeVariance(std::deque<uint32_t> d, uint32_t avg);
 
 // Hardware constants
 const touch_pad_t tpPin = TOUCH_PAD_NUM7;
@@ -87,7 +97,8 @@ TaskHandle_t rfListenerTask;
 
 // Message types
 const char MTYPE_REGISTER       = 2;
-const char MTYPE_TOUCHED        = 100;
+const char MTYPE_UNTOUCHED      = 99; 
+const char MTYPE_TOUCHED        = 100; 
 const char MTYPE_ERROR          = 33;
 const char MTYPE_TIMESTAMPRESET = 66;
 const char MTYPE_ACK            = 111;
@@ -96,6 +107,8 @@ const char MTYPE_ACK            = 111;
 NetworkModule module;
 WiFiClient socket;
 std::queue<OutboundMessage> outboundMessageQueue;
+Eloquent::TF::Sequential<TF_NUM_OPS, ARENA_SIZE> tf;
+std::deque<uint32_t> buf;
 
 // Constants (TODO should maybe be moved to EEPROM)
 const char* HOST = "192.168.1.111";
@@ -119,6 +132,27 @@ void setup() {
   ledcAttach(ledBluePin, 5000, 8);
   digitalWrite(speakerPin, HIGH);
   readEeprom((char*)&module, 0, sizeof(NetworkModule)); // Load EEPROM
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  tf.setNumInputs(4);
+  tf.setNumOutputs(3);
+  tf.resolver.AddFullyConnected();
+  tf.resolver.AddRelu();
+  tf.resolver.AddLogistic();
+
+  while (!tf.begin(modelData).isOk()) {
+    Serial.println(tf.exception.toString());
+  }
+
+  // Collect baseline data for the buffer
+  for (int i = 0; i < TOUCH_BUFSIZE; i++) {
+    uint32_t touchVal = touchRead(tpPin);
+    buf.push_front(touchVal);
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Connect to wifi
   setState(INIT_WaitingWifi);
@@ -259,6 +293,9 @@ void sendMessage(OutboundMessage msg) {
 /* ************************* */
 
 void messageLoop(void* param) {
+  uint32_t min, max, avg, var;
+  float modelInput[4];
+
   Serial.printf("Message loop running on core %d\n", xPortGetCoreID());
   
   // Normally aliased to touch_val_t
@@ -284,7 +321,31 @@ void messageLoop(void* param) {
       std::string line = std::string(socket.readStringUntil('\n').c_str());
       processIncomingMessage(line);
     }
-    
+
+    uint32_t touchVal;
+    for (int i = 0; i < TOUCH_BUFSIZE; i++) {
+      digitalWrite(speakerPin, HIGH);
+      touchVal = touchRead(tpPin);
+      buf.pop_front();
+      buf.push_back(touchVal);
+      delay(1);
+    }
+    avg = dequeAvg(buf);
+    var = dequeVariance(buf, avg);
+    min = dequeMin(buf);
+    max = dequeMax(buf);
+    modelInput[0] = (float)avg;
+    modelInput[1] = (float)var;
+    modelInput[2] = (float)(max)-(float)(min);
+    modelInput[3] = (float)buf.back() - (float)buf.front();
+
+    while(!tf.predict(modelInput).isOk()) {
+      Serial.println(tf.exception.toString());
+    }
+    if (tf.output(1) > 0.01f) {
+      outboundMessageQueue.push(createOutboundMessage(MTYPE_UNTOUCHED, currentTime()));
+    }
+
     //vTaskDelay((TickType_t) (200 / portTICK_PERIOD_MS)); // ~200ms delay to satisfy the scheduler
   }
 }
@@ -412,4 +473,55 @@ void writeLed(Color color) {
   ledcWrite(ledRedPin, color.r);
   ledcWrite(ledGreenPin, color.g);
   ledcWrite(ledBluePin, color.b);
+}
+
+uint32_t dequeMax(std::deque<uint32_t> d) {
+  if (d.empty()) { return -1; }
+
+  uint32_t max = 0;
+
+  for (uint32_t val : d) {
+    max = val > max ? val : max;
+  }
+  return max;
+}
+
+uint32_t dequeMin(std::deque<uint32_t> d) {
+  if (d.empty()) { return 0; }
+
+  uint32_t min = 0b11111111111111111111111111111111;
+
+  for (uint32_t val : d) {
+    min = val < min ? val : min;
+  }
+  return min;
+}
+
+uint32_t dequeAvg(std::deque<uint32_t> d) {
+  if (d.empty()) { return 0; }
+
+  uint32_t sum = 0;
+
+  for (uint32_t val : d) {
+    sum += val;
+  }
+  return sum / d.size();
+}
+
+uint32_t dequeVariance(std::deque<uint32_t> d, uint32_t avg) {
+  if (d.empty()) { return 0; }
+
+  uint32_t acc = 0;
+  int32_t v;
+  
+  //Serial.printf("avg = %d    |    ", avg);
+
+  for (uint32_t val : d) {
+    v = ((int32_t)val) - ((int32_t)avg);
+    //Serial.printf("%d -> %d, ", val, v);
+    acc += (v * v);
+  }
+  //Serial.printf("\n");
+
+  return acc / d.size();
 }

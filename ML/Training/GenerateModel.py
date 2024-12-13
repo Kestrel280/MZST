@@ -37,7 +37,7 @@ if __name__ == '__main__':
     model.add(tf.keras.layers.Dense(6, activation='relu', name='a', input_shape=(4,)))
     for i in range (NUM_NN_LAYERS - 2):
         model.add(tf.keras.layers.Dense(8, activation='relu', name=f"layer_{i}"))
-    model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(1, activation='relu'))
 
     model.compile(optimizer='rmsprop', loss='mse', metrics=['mae', 'accuracy'])
     model.summary()
@@ -47,6 +47,6 @@ if __name__ == '__main__':
     porter = tf_porter(model, train_data, labels_train)
     cpp_code = porter.to_cpp(instance_name="randomNN", arena_size=2048, )
 
-    with open('MODEL.h', 'w') as fp:
+    with open('MODEL2.h', 'w') as fp:
         fp.write(cpp_code)
 
