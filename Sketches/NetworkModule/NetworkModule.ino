@@ -13,7 +13,11 @@
 #define SERIAL_BAUDRATE 921600
 #define NOOP __asm__("nop\n\t");
 
-unsigned short id = 9;            // ID of the node. TODO Move this to EEPROM
+// Constants (TODO should maybe be moved to EEPROM)
+const char* HOST = "192.168.1.119";
+const uint16_t PORT = 5000;
+const unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
+const uint32_t UNTOUCH_TIMEOUT_MS = 1000;
 
 typedef enum _State {
   INIT_BootStart,             // State set immediately upon module boot
@@ -97,15 +101,14 @@ NetworkModule module;
 WiFiClient socket;
 std::queue<OutboundMessage> outboundMessageQueue;
 
-// Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.111";
-const uint16_t PORT = 5000;
-
 // State globals
-bool touched = false;             // Helper variable to track if the node has been triggered. Must be reset by server
-uint32_t timestampLastReset = 0;  // Timestamp when the node received the most recent RF broadcast
-State state;                      // Current State of the node
-StateData* stateData = nullptr;   // ... Data of the current state...
+uint32_t timestampLastReset = 0;    // Timestamp when the node received the most recent RF broadcast
+uint32_t timeLastTouch = 0;         // Timestamp of last time node was touched
+State state;                        // Current State of the node
+StateData* stateData = nullptr;     // ... Data of the current state...
+bool pendingServerUntouch = false;  // Whether the server has sent us an UNTOUCH message that we haven't yet processed
+bool inTouchCooldown = false;       // Whether we're in cooldown from the previous touch
+
 
 void setup() {
 
@@ -199,12 +202,13 @@ bool circularBufferMatchesKey(int* buffer, int* key, int startIdx, int length, i
 /* ************************* */
 
 void touchpadCallback() {
-  if (!touched) {
-    touched = true;
+  if (!inTouchCooldown) {
+    inTouchCooldown = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, currentTime()));
     if (stateData->colorOnTouch) {
       writeLed(*(stateData->colorOnTouch));
     }
+    timeLastTouch = currentTimeAbs();
   }
 }
 
@@ -232,8 +236,7 @@ void processIncomingMessage(std::string msg) {
   }
 
   if (word == "UNTOUCH") {
-    touched = false;
-    writeLed(*(stateData->colorIdle));
+    pendingServerUntouch = true;
   }
 
   if (word == "SET_STATE") {
@@ -265,14 +268,16 @@ void messageLoop(void* param) {
   //   which is uint16_t on ESP32, uint32_t on ESP32s2/s3
   // Explicitly use uint32_t because the behavior of touchPadInterrupt() is different for both anyway
   // ('threshold' argument is a true threshold for ESP32, but on ESP32s2/s3 it's an INCREMENT value)
-  uint32_t _touchVal, _touchIncrement;
+  uint32_t _touchVal, touchIncrement, touchThreshold;
   _touchVal = touchRead(tpPin);
-  _touchIncrement = _touchVal / 8;
-  sendMessage(createOutboundMessage(MTYPE_REGISTER, _touchVal + _touchIncrement));
-  touchAttachInterrupt(tpPin, &touchpadCallback, _touchIncrement);
-  Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, _touchVal + _touchIncrement);
+  touchIncrement = _touchVal / 8;
+  touchThreshold = _touchVal + touchIncrement;
+  sendMessage(createOutboundMessage(MTYPE_REGISTER, touchThreshold));
+  touchAttachInterrupt(tpPin, &touchpadCallback, touchIncrement);
+  Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, touchThreshold);
 
   while (true) {
+    // Send messages
     while(!outboundMessageQueue.empty()) {
       OutboundMessage msg = outboundMessageQueue.front();
       Serial.printf("Sending message to server with type: %d\n", msg.type);
@@ -280,12 +285,26 @@ void messageLoop(void* param) {
       outboundMessageQueue.pop();
     }
 
+    // Receive messages
     while (socket.available() > 0) {
       std::string line = std::string(socket.readStringUntil('\n').c_str());
       processIncomingMessage(line);
     }
-    
-    //vTaskDelay((TickType_t) (200 / portTICK_PERIOD_MS)); // ~200ms delay to satisfy the scheduler
+
+    // TODO listen for "administrative" connections
+
+    // Reset to untouch color iff server has sent us UNTOUCH and we're ready
+    //  We're ready if UNTOUCH_TIMEOUT has passed since last touch and we're not currently touching
+    if (inTouchCooldown) {
+      inTouchCooldown = !(((currentTimeAbs() - timeLastTouch) > UNTOUCH_TIMEOUT_MS) && (touchRead(tpPin) < (touchThreshold - touchIncrement / 2)));
+    }
+    // Unset the pendingServerUntouch and inTouchCooldown flags
+    if (pendingServerUntouch && !inTouchCooldown) {
+      vTaskDelay((TickType_t) (100 / portTICK_PERIOD_MS)); // ~100ms delay before unsetting flags, to avoid re-touch on release. TODO do this better
+      inTouchCooldown = false;
+      pendingServerUntouch = false;
+      writeLed(*(stateData->colorIdle));
+    }
   }
 }
 
@@ -392,7 +411,6 @@ void setState(State newState) {
   }
   Serial.printf("SetState (previous %d, new %d)\n", state, newState);
   state = newState;
-  touched = false;
   writeLed(*(stateData->colorIdle));
 }
 
