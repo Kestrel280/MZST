@@ -13,11 +13,13 @@
 #define SERIAL_BAUDRATE 921600
 #define NOOP __asm__("nop\n\t");
 
+int64_t dbg_time;
+
 // Constants (TODO should maybe be moved to EEPROM)
 const char* HOST = "192.168.1.119";
 const uint16_t PORT = 5000;
 const unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
-const uint32_t UNTOUCH_TIMEOUT_MS = 1000;
+const int64_t UNTOUCH_TIMEOUT_US = 1000000;
 
 typedef enum _State {
   INIT_BootStart,             // State set immediately upon module boot
@@ -73,8 +75,8 @@ void touchpadCallback(void* param);
 void sendMessage(OutboundMessage msg);
 void rfListen(void* param);
 void messageLoop(void* param);
-uint32_t currentTimeAbs();
-uint32_t currentTime();
+int64_t currentTimeAbs();
+int64_t currentTime();
 void writeLed(Color color);
 
 // Hardware constants
@@ -102,8 +104,8 @@ WiFiClient socket;
 std::queue<OutboundMessage> outboundMessageQueue;
 
 // State globals
-uint32_t timestampLastReset = 0;    // Timestamp when the node received the most recent RF broadcast
-uint32_t timeLastTouch = 0;         // Timestamp of last time node was touched
+int64_t timestampLastResetUs = 0;   // Timestamp when the node received the most recent RF broadcast
+int64_t timeLastTouchUs = 0;        // Timestamp of last time node was touched
 State state;                        // Current State of the node
 StateData* stateData = nullptr;     // ... Data of the current state...
 bool pendingServerUntouch = false;  // Whether the server has sent us an UNTOUCH message that we haven't yet processed
@@ -175,7 +177,7 @@ void loop() {
 /*     TimeSync Functions    */
 /* ************************* */
 
-int countSetBits(int inp) {
+inline int countSetBits(int inp) {
   int count = 0;
   while (inp) {
     inp = inp & (inp - 1);
@@ -208,7 +210,7 @@ void touchpadCallback() {
     if (stateData->colorOnTouch) {
       writeLed(*(stateData->colorOnTouch));
     }
-    timeLastTouch = currentTimeAbs();
+    timeLastTouchUs = currentTimeAbs();
   }
 }
 
@@ -296,7 +298,7 @@ void messageLoop(void* param) {
     // Reset to untouch color iff server has sent us UNTOUCH and we're ready
     //  We're ready if UNTOUCH_TIMEOUT has passed since last touch and we're not currently touching
     if (inTouchCooldown) {
-      inTouchCooldown = !(((currentTimeAbs() - timeLastTouch) > UNTOUCH_TIMEOUT_MS) && (touchRead(tpPin) < (touchThreshold - touchIncrement / 2)));
+      inTouchCooldown = !(((currentTimeAbs() - timeLastTouchUs) > UNTOUCH_TIMEOUT_US) && (touchRead(tpPin) < (touchThreshold - touchIncrement / 2)));
     }
     // Unset the pendingServerUntouch and inTouchCooldown flags
     if (pendingServerUntouch && !inTouchCooldown) {
@@ -311,10 +313,13 @@ void messageLoop(void* param) {
 void rfListen(void* param) {
   Serial.printf("rfListen running on core %d\n", xPortGetCoreID());
 
+  const int LOOP_TIME_US = 1000; // How long it takes to run one 
   unsigned int buf = 0b0; // Bit buffer received on the RF pin. Left boundary is old, right boundary is new
   int matchedBits;
 
   unsigned int debugMask;
+
+  dbg_time = currentTimeAbs();
 
   while(true) {
 
@@ -339,12 +344,13 @@ void rfListen(void* param) {
     
     // Check if buffer matches the key to acceptable tolerance
     if (matchedBits >= rfKeyRequiredMatches ) {
-      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET, currentTime()));
-      timestampLastReset = currentTimeAbs();
+      outboundMessageQueue.push(createOutboundMessage(MTYPE_TIMESTAMPRESET, matchedBits));
+      timestampLastResetUs = currentTimeAbs();
       Serial.printf("Received timestamp-reset key (%d / %d matched bits, %d required) \n", matchedBits, 32, rfKeyRequiredMatches);
     };
 
-    delay(rfPulseIntervalMs);
+    dbg_time = currentTimeAbs(); // this call just happens to put us at pretty much exactly 1ms for this loop, so. leaving it in :-)
+    esp_rom_delay_us(rfPulseIntervalUs + TRANSMIT_LOOP_TIME_US); // (busy wait) Delay for the pulse duration + account for transmitter lag
   }
 }
 
@@ -418,12 +424,11 @@ void setState(State newState) {
 /*         Utilities         */
 /* ************************* */
 
-// TODO make inline
-uint32_t currentTimeAbs() {
-  return millis();
+inline int64_t currentTimeAbs() {
+  return esp_timer_get_time();
 }
-uint32_t currentTime() {
-  return currentTimeAbs() - timestampLastReset;
+inline int64_t currentTime() {
+  return currentTimeAbs() - timestampLastResetUs;
 }
 
 void writeLed(Color color) {

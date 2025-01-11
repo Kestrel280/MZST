@@ -8,6 +8,7 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
+int64_t dbg_time;
 unsigned short id = 21;            // ID of the transmitter. TODO Move this to EEPROM
 
 struct OutboundMessage {
@@ -25,7 +26,7 @@ void sendMessage(OutboundMessage msg);
 const int transmitPin = 27;
 
 // Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.111";
+const char* HOST = "192.168.1.119";
 const uint16_t PORT = 5000;
 
 // Message types
@@ -42,6 +43,8 @@ void setup() {
   EEPROM.begin(EEPROM_SIZE);
   readEeprom((char*)&module, 0, sizeof(TransmitterModule)); // Load EEPROM
   pinMode(transmitPin, OUTPUT);
+
+  dbg_time = currentTimeAbs();
 
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
@@ -97,7 +100,9 @@ void processIncomingMessage(std::string msg) {
   }
 
   if (word == "TRANSMIT") {
+    dbg_time = currentTimeAbs();
     transmit();
+    Serial.printf("took %d microseconds to transmit\n", currentTimeAbs() - dbg_time);
   }
 }
 
@@ -122,8 +127,12 @@ void transmit() {
     digitalWrite(transmitPin, val); // Output the current array value to the pin
     Serial.printf("%d", val);
     mask = mask >> 1;
-    delay(rfPulseIntervalMs); // Delay for the pulse duration
+    esp_rom_delay_us(rfPulseIntervalUs + RECEIVE_LOOP_TIME_US); // (busy wait) Delay for the pulse duration + account for receiver lag
   }
   digitalWrite(transmitPin, LOW);
   Serial.printf(" Done\n");
+}
+
+inline int64_t currentTimeAbs() {
+  return esp_timer_get_time();
 }
