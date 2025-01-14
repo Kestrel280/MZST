@@ -240,27 +240,40 @@ void processIncomingMessage(std::string msg) {
   //for (char c : msg) { Serial.printf("%x ", c); }
 
   std::stringstream iss(msg);
-  std::string word;
+  std::string command, value;
 
-  std::getline(iss, word, ' '); // Read the first word of the message into 'word'
+  std::getline(iss, command, ' '); // Read the first word of the message into 'command'
 
-  if ((word == "RESTART") || (word == "SHUTDOWN")) {
-    Serial.printf("Received %s message! Restarting!", word.c_str());
+  if ((command == "RESTART") || (command == "SHUTDOWN")) {
+    Serial.printf("Received %s message! Restarting!", command.c_str());
     esp_restart();
   }
 
-  if (word == "REQ_ACK") { // Server is requesting an ACK; send it, then continue
+  if (command == "REQ_ACK") { // Server is requesting an ACK; send it, then continue
     outboundMessageQueue.push(createOutboundMessage(MTYPE_ACK, currentTime()));
-    std::getline(iss, word, ' ');
+    std::getline(iss, command, ' ');
   }
 
-  if (word == "UNTOUCH") {
+  if (command == "UNTOUCH") {
     pendingServerUntouch = true;
   }
 
-  if (word == "SET_STATE") {
-    std::getline(iss, word, ' '); // Second word tells us 
-    setState(parseStateName(word));
+  if (command == "SET_STATE") {
+    std::getline(iss, value, ' '); // Second word tells us what state to set
+    setState(parseStateName(value));
+  }
+
+  if (command == "SET_EEPROM_VALUE") {
+    std::getline(iss, command, ' '); // Second word tells us what value to update
+    std::getline(iss, value, ' '); // Third word tells us what the new value is
+
+    if      (command == "NETWORKSSID")      strncpy((networkModule).networkSsid, value.c_str(), sizeof(networkModule.networkSsid));
+    else if (command == "NETWORKPASSWORD")  strncpy((networkModule).networkPassword, value.c_str(), sizeof(networkModule.networkPassword));
+    else if (command == "SERVERIP")         strncpy((networkModule).serverIp, value.c_str(), sizeof(networkModule.serverIp));
+    else if (command == "SERVERPORT")       networkModule.serverPort = (unsigned int) atoi(value.c_str());
+    else if (command == "MODULEID")         networkModule.moduleId = (unsigned int) atoi(value.c_str());
+
+    writeEeprom((char*)&networkModule, sizeof(NetworkModule), 0);
   }
 }
 
