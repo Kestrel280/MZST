@@ -16,8 +16,7 @@
 int64_t dbg_time;
 
 // Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.119";
-const uint16_t PORT = 5000;
+const char* HOST = "192.168.1.122";
 const unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
 const int64_t UNTOUCH_TIMEOUT_US = 1000000;
 
@@ -100,7 +99,9 @@ const char MTYPE_ACK            = 111;
 
 // Other globals
 NetworkModule module;
-WiFiClient socket;
+WiFiClient serverSocket;
+WiFiClient adminSocket;
+WiFiServer adminSocketListener;
 std::queue<OutboundMessage> outboundMessageQueue;
 
 // State globals
@@ -138,12 +139,29 @@ void setup() {
 
   // Connect to socket
   setState(INIT_WaitingServer);
-  Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
-  while(!socket.connect(HOST, PORT)) {
+  Serial.printf("Trying to connect to socket at host %s:%d", HOST, SERVER_PORT);
+  adminSocketListener = WiFiServer(ADMIN_PORT);
+  adminSocketListener.begin();
+  while(!serverSocket.connect(HOST, SERVER_PORT)) {
     Serial.printf(".");
+
+    // Listen for admin connections 
+    adminSocket = adminSocketListener.available();
+    if (adminSocket) {
+      Serial.printf("\nReceived admin-socket connection\n");
+      while (adminSocket.connected()) {
+        std::string line = std::string(adminSocket.readStringUntil('\n').c_str());
+        processIncomingMessage(line);
+      }
+      adminSocket.stop();
+      Serial.printf("\nDisconnected from admin-socket, continuing to attempt connection to server\n");
+    }
+
     vTaskDelay(250);
   }
-  Serial.printf("\nConnected to socket at host %s:%d\n", HOST, PORT);
+  Serial.printf("\nConnected to socket at host %s:%d\n", HOST, SERVER_PORT);
+
+  adminSocketListener.close();
 
   Serial.printf("starting tasks\n");
   setState(INIT_Complete);
@@ -256,7 +274,7 @@ OutboundMessage createOutboundMessage(char type, unsigned long data) {
 }
 
 void sendMessage(OutboundMessage msg) {
-  socket.write_P((char*)(&msg), sizeof(OutboundMessage));
+  serverSocket.write_P((char*)(&msg), sizeof(OutboundMessage));
 }
 
 /* ************************* */
@@ -288,12 +306,10 @@ void messageLoop(void* param) {
     }
 
     // Receive messages
-    while (socket.available() > 0) {
-      std::string line = std::string(socket.readStringUntil('\n').c_str());
+    while (serverSocket.available() > 0) {
+      std::string line = std::string(serverSocket.readStringUntil('\n').c_str());
       processIncomingMessage(line);
     }
-
-    // TODO listen for "administrative" connections
 
     // Reset to untouch color iff server has sent us UNTOUCH and we're ready
     //  We're ready if UNTOUCH_TIMEOUT has passed since last touch and we're not currently touching
