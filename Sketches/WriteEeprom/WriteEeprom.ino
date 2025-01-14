@@ -1,35 +1,30 @@
 #include <EEPROM.h>
 #include "../_include/NetworkModule.h"
-#include "../_include/_Networks.h"
 #include "../_include/Eeprom_Helpers.h"
-
-NetworkModule _SamHome = {
-  .networkSsid = __SAM_NETWORK_SSID,
-  .networkPassword = __SAM_NETWORK_PASSWORD
-};
 
 void setup() {
   Serial.begin(921600);
   EEPROM.begin(EEPROM_SIZE);
   Serial.printf("Flashing EEPROM...\n");
-  Serial.println("asdf");
 
-  /* ------------------------ */
-  /* ------------------------ */
-  auto dataToFlash = _SamHome;
-  /* ------------------------ */
-  /* ------------------------ */
+  NetworkModule networkModule;
+  memset(&networkModule, 0, sizeof(NetworkModule)); // 0-out the entire struct. (There are ways to do this implicitly, but I want to be explicit)
+  
+  // cpp documentation suggests that strncpy with count > sizeof(src) is ub; but the given examples do exactly that and seem to work
+  strncpy((networkModule).networkSsid,      "Network SSID",     sizeof(networkModule.networkSsid));
+  strncpy((networkModule).networkPassword,  "Network Password", sizeof(networkModule.networkPassword));
+  strncpy((networkModule).serverIp,         "192.168.1.1",      sizeof(networkModule.serverIp));
+  networkModule.serverPort = (unsigned short) 5000;
+  networkModule.moduleId = (unsigned short) 0;
 
-  int i;
-  for (i = 0; (i < sizeof(dataToFlash)) && (i < EEPROM_SIZE); i++) { EEPROM.write(i, *((char*)&dataToFlash + i)); }
-  for (; i < EEPROM_SIZE; i++) { EEPROM.write(i, 0); }
-  EEPROM.commit();
+  wipeEeprom();
+  writeEeprom((char*)&networkModule, sizeof(NetworkModule), 0);
   
   Serial.printf("Flashed EEPROM\n");
 
-  dumpEeprom();
-
   Serial.printf("Verify that EEPROM was flashed correctly and then reload board with correct program\n");
+  sleep(2);
+  dumpEeprom();
 }
 
 void loop() { }

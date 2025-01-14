@@ -1,7 +1,0 @@
-#ifndef NETWORKS_H
-#define NETWORKS_H
-
-#define __YOUR_NETWORK_SSID "NetworkSSID"
-#define __YOUR_NETWORK_PASSWORD "NetworkPassword"
-
-#endif

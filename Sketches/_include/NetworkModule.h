@@ -12,6 +12,9 @@
 typedef struct _NetworkModule {
 	char networkSsid[NWM_MAXSSID_LEN];
 	char networkPassword[NWM_MAXPW_LEN];
+    char serverIp[16];
+    unsigned short serverPort;
+    unsigned short moduleId;
 } NetworkModule;
 
 #endif

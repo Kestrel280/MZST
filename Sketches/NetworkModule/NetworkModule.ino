@@ -15,9 +15,7 @@
 
 int64_t dbg_time;
 
-// Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.122";
-const unsigned short id = 5;            // ID of the node. TODO Move this to EEPROM
+// Constants
 const int64_t UNTOUCH_TIMEOUT_US = 1000000;
 
 typedef enum _State {
@@ -98,7 +96,7 @@ const char MTYPE_TIMESTAMPRESET = 66;
 const char MTYPE_ACK            = 111;
 
 // Other globals
-NetworkModule module;
+NetworkModule networkModule;
 WiFiClient serverSocket;
 WiFiClient adminSocket;
 WiFiServer adminSocketListener;
@@ -124,11 +122,12 @@ void setup() {
   ledcAttach(ledGreenPin, 5000, 8);
   ledcAttach(ledBluePin, 5000, 8);
   digitalWrite(speakerPin, HIGH);
-  readEeprom((char*)&module, 0, sizeof(NetworkModule)); // Load EEPROM
+  dumpEeprom();
+  readEeprom((char*)&networkModule, 0, sizeof(NetworkModule)); // Load EEPROM
 
   // Connect to wifi
   setState(INIT_WaitingWifi);
-  WiFi.begin(module.networkSsid, module.networkPassword);
+  WiFi.begin(networkModule.networkSsid, networkModule.networkPassword);
   while (WiFi.status() != WL_CONNECTED) {
     Serial.printf(".");
     vTaskDelay(250);
@@ -139,10 +138,10 @@ void setup() {
 
   // Connect to socket
   setState(INIT_WaitingServer);
-  Serial.printf("Trying to connect to socket at host %s:%d", HOST, SERVER_PORT);
+  Serial.printf("Trying to connect to server socket at host %s:%d", networkModule.serverIp, networkModule.serverPort);
   adminSocketListener = WiFiServer(ADMIN_PORT);
   adminSocketListener.begin();
-  while(!serverSocket.connect(HOST, SERVER_PORT)) {
+  while(!serverSocket.connect(networkModule.serverIp, networkModule.serverPort)) {
     Serial.printf(".");
 
     // Listen for admin connections 
@@ -159,7 +158,7 @@ void setup() {
 
     vTaskDelay(250);
   }
-  Serial.printf("\nConnected to socket at host %s:%d\n", HOST, SERVER_PORT);
+  Serial.printf("\nConnected to socket at host %s:%d\n", networkModule.serverIp, networkModule.serverPort);
 
   adminSocketListener.close();
 
@@ -268,7 +267,7 @@ void processIncomingMessage(std::string msg) {
 OutboundMessage createOutboundMessage(char type, unsigned long data) {
   OutboundMessage msg;
   msg.type = type;
-  msg.id = id;
+  msg.id = networkModule.moduleId;
   msg.data = data;
   return msg;
 }
