@@ -11,6 +11,10 @@ python AdminClient.py 192.168.1.10,192.168.1.11,192.168.1.12 SET_EEPROM_VALUE SE
 
 ADMIN_PORT = 7777
 
+if len(sys.argv) < 3:
+    print("usage: AdminClient [ip1,ip2] [cmd arg1 arg2...]")
+    exit()
+
 ips = sys.argv[1].split(',')
 command = ' '.join(sys.argv[2:])
 
