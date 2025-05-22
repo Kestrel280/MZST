@@ -1,20 +1,21 @@
 #ifndef NETWORKMODULE_H
 #define NETWORKMODULE_H
 
-#define EEPROM_SIZE 512
+#include <string>
+#include "Module.h"
 
-#define NWM_MAXSSID_LEN 32
-#define NWM_MAXPW_LEN 32
+// Message handler for Network Module-specific messages
+void processModuleSpecificMessage(std::string iss);
 
-#define SERVER_PORT 5000
-#define ADMIN_PORT 7777
+// Hardware definitions and constants
+#define SERIAL_BAUDRATE 921600
+#define TP_PIN TOUCH_PAD_NUM7
+#define RF_RECEIVE_PIN D9
+#define LED_RED_PIN D2
+#define LED_GREEN_PIN D3
+#define LED_BLUE_PIN D1
+#define SPEAKER_PIN D0
 
-typedef struct _NetworkModule {
-	char networkSsid[NWM_MAXSSID_LEN];
-	char networkPassword[NWM_MAXPW_LEN];
-    char serverIp[16];
-    unsigned short serverPort;
-    unsigned short moduleId;
-} NetworkModule;
+#define writeLed(pcolor) ledcWrite(LED_RED_PIN, (pcolor)->r); ledcWrite(LED_GREEN_PIN, (pcolor)->g); ledcWrite(LED_BLUE_PIN, (pcolor)->b)
 
 #endif

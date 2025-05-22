@@ -26,7 +26,7 @@ void sendMessage(OutboundMessage msg);
 const int transmitPin = 27;
 
 // Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.119";
+const char* HOST = "192.168.1.113";
 const uint16_t PORT = 5000;
 
 // Message types
@@ -56,8 +56,23 @@ void setup() {
 
   // Connect to socket
   Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
+  adminSocketListener = WiFiServer(ADMIN_PORT);
+  adminSocketListener.begin();
   while(!socket.connect(HOST, PORT)) {
     Serial.printf(".");
+
+    // Listen for admin connections 
+    adminSocket = adminSocketListener.available();
+    if (adminSocket) {
+      Serial.printf("\nReceived admin-socket connection\n");
+      while (adminSocket.connected()) {
+        std::string line = std::string(adminSocket.readStringUntil('\n').c_str());
+        processIncomingMessage(line);
+      }
+      adminSocket.stop();
+      Serial.printf("\nDisconnected from admin-socket, continuing to attempt connection to server\n");
+    }
+
     vTaskDelay(250);
   }
 

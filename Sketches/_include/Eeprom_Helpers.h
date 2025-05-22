@@ -1,6 +1,10 @@
 #ifndef EEPROM_HELPERS_H
 #define EEPROM_HELPERS_H
 
+/* 
+EepromHelpers.h -- header-only file containing utilities for handling module EEPROM
+*/
+
 #include <EEPROM.h>
 
 #define EEPROM_SIZE 512

@@ -1,14 +1,9 @@
 #ifndef TRANSMITTERMODULE_H
 #define TRANSMITTERMODULE_H
 
-#define EEPROM_SIZE 512
+#include "Module.h"
 
-#define TM_MAXSSID_LEN 32
-#define TM_MAXPW_LEN 32
-
-typedef struct _TransmitterModule {
-	char networkSsid[TM_MAXSSID_LEN];
-	char networkPassword[TM_MAXPW_LEN];
-} TransmitterModule;
+// Message handler for Transmitter Module-specific messages
+void processModuleSpecificMessage(std::string msg);
 
 #endif
