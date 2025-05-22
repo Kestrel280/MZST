@@ -9,15 +9,12 @@
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
 
-// Hardware constants
-const int transmitPin = 27;
-
 void setup() {
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
   dumpEeprom();
   readEeprom((char*)&module, 0, sizeof(Module)); // Initialize module by loading from EEPROM
-  pinMode(transmitPin, OUTPUT);
+  pinMode(TRANSMIT_PIN, OUTPUT);
 
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
