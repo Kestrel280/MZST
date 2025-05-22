@@ -5,46 +5,19 @@
 #include <WiFi.h>
 
 #include "../_include/TransmitterModule.h"
+#include "../_include/Server.h"
 #include "../_include/Eeprom_Helpers.h"
 #include "../_include/TimerSyncModule.h"
-
-int64_t dbg_time;
-unsigned short id = 21;            // ID of the transmitter. TODO Move this to EEPROM
-
-struct OutboundMessage {
-  short type;
-  short id;
-  uint32_t data;
-};
-
-// Prototypes
-OutboundMessage createOutboundMessage(char type, uint32_t data);
-void processIncomingMessage(std::string msg);
-void sendMessage(OutboundMessage msg);
 
 // Hardware constants
 const int transmitPin = 27;
 
-// Constants (TODO should maybe be moved to EEPROM)
-const char* HOST = "192.168.1.113";
-const uint16_t PORT = 5000;
-
-// Message types
-const char MTYPE_REGISTER       = 3;    // Registration code for transmitters
-const char MTYPE_ACK            = 111;
-
-// Other globals
-TransmitterModule module;
-WiFiClient socket;
-std::queue<OutboundMessage> outboundMessageQueue;
-
 void setup() {
-  Serial.begin(921600);
+  Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
-  readEeprom((char*)&module, 0, sizeof(TransmitterModule)); // Load EEPROM
+  dumpEeprom();
+  readEeprom((char*)&module, 0, sizeof(Module)); // Initialize module by loading from EEPROM
   pinMode(transmitPin, OUTPUT);
-
-  dbg_time = currentTimeAbs();
 
   // Connect to wifi
   WiFi.begin(module.networkSsid, module.networkPassword);
@@ -54,11 +27,13 @@ void setup() {
   }
   Serial.printf("\nWiFi connected with IP: %s\n", WiFi.localIP().toString().c_str());
 
-  // Connect to socket
-  Serial.printf("Trying to connect to socket at host %s:%d", HOST, PORT);
+  sleep(2); // Pause a couple seconds... gives us time to restart/update the server if we just reset from a SHUTDOWN message
+
+  // Connect to server; while connecting, if we receive an admin connection, accept it and process whatever message it has for us
+  Serial.printf("Trying to connect to socket at host %s:%d", module.serverIp, module.serverPort);
   adminSocketListener = WiFiServer(ADMIN_PORT);
   adminSocketListener.begin();
-  while(!socket.connect(HOST, PORT)) {
+  while(!serverSocket.connect(module.serverIp, module.serverPort)) {
     Serial.printf(".");
 
     // Listen for admin connections 
@@ -75,9 +50,9 @@ void setup() {
 
     vTaskDelay(250);
   }
-
-  // Register to server
-  sendMessage(createOutboundMessage(MTYPE_REGISTER, 0));
+  Serial.printf("\nConnected to server at host %s:%d\n", module.serverIp, module.serverPort);
+  adminSocketListener.close();
+  sendMessage(createOutboundMessage(MTYPE_REGISTER_TRNS, 0));
   Serial.printf("\nRegistered to server\n");
 }
 
@@ -89,48 +64,21 @@ void loop() {
     outboundMessageQueue.pop();
   }
 
-  while (socket.available() > 0) {
-    std::string line = std::string(socket.readStringUntil('\n').c_str());
+  while (serverSocket.available() > 0) {
+    std::string line = std::string(serverSocket.readStringUntil('\n').c_str());
     processIncomingMessage(line);
   }
 }
 
-void processIncomingMessage(std::string msg) {
-  Serial.printf("Received message from server: %s\n", msg.c_str());
-  //for (char c : msg) { Serial.printf("%x ", c); }
-
+void processModuleSpecificMessage(std::string msg) {
   std::stringstream iss(msg);
-  std::string word;
+  std::string command, value;
 
-  std::getline(iss, word, ' '); // Read the first word of the message into 'word'
-
-  if ((word == "RESTART") || (word == "SHUTDOWN")) {
-    Serial.printf("Received %s message! Restarting!", word.c_str());
-    esp_restart();
-  }
-
-  if (word == "REQ_ACK") { // Server is requesting an ACK; send it, then continue
-    outboundMessageQueue.push(createOutboundMessage(MTYPE_ACK, 0));
-    std::getline(iss, word, ' ');
-  }
-
-  if (word == "TRANSMIT") {
-    dbg_time = currentTimeAbs();
+  std::getline(iss, command, ' '); // Read the first word of the message stream into 'command'
+  
+  if (command == "TRANSMIT") {
     transmit();
-    Serial.printf("took %d microseconds to transmit\n", currentTimeAbs() - dbg_time);
   }
-}
-
-OutboundMessage createOutboundMessage(char type, unsigned long data) {
-  OutboundMessage msg;
-  msg.type = type;
-  msg.id = id;
-  msg.data = data;
-  return msg;
-}
-
-void sendMessage(OutboundMessage msg) {
-  socket.write_P((char*)(&msg), sizeof(OutboundMessage));
 }
 
 void transmit() {
@@ -146,8 +94,4 @@ void transmit() {
   }
   digitalWrite(transmitPin, LOW);
   Serial.printf(" Done\n");
-}
-
-inline int64_t currentTimeAbs() {
-  return esp_timer_get_time();
 }

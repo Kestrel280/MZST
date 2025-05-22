@@ -19,7 +19,9 @@ Prototypes / Interface / Definitions
 ------------------------------------------------------------------------------*/
 
 // Message types (char -- range is 0-255)
-#define MTYPE_REGISTER       2
+#define MTYPE_REGISTER_USER  1
+#define MTYPE_REGISTER_NODE  2
+#define MTYPE_REGISTER_TRNS  3
 #define MTYPE_TOUCHED        100
 #define MTYPE_ERROR          33
 #define MTYPE_TIMESTAMPRESET 66
@@ -36,7 +38,7 @@ struct OutboundMessage {
 // Module loop should handle pulling these out and sending
 std::queue<OutboundMessage> outboundMessageQueue;
 
-// Global socket for server and admin communications
+// Global sockets for server and admin communications
 WiFiClient serverSocket;                            // Socket for server communication
 WiFiClient adminSocket;                             // Socket for pre-server-connection "admin" communications
 WiFiServer adminSocketListener;                     // Listener socket for incoming "admin" comms

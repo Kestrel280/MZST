@@ -137,7 +137,7 @@ void messageLoop(void* param) {
   _touchVal = touchRead(TP_PIN);
   touchIncrement = _touchVal / 8;
   touchThreshold = _touchVal + touchIncrement;
-  sendMessage(createOutboundMessage(MTYPE_REGISTER, touchThreshold));
+  sendMessage(createOutboundMessage(MTYPE_REGISTER_NODE, touchThreshold));
   touchAttachInterrupt(TP_PIN, &touchpadCallback, touchIncrement);
   Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, touchThreshold);
 
