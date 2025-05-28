@@ -35,12 +35,20 @@ void setup() {
   // Hardware setup
   Serial.begin(SERIAL_BAUDRATE);
   EEPROM.begin(EEPROM_SIZE);
-  pinMode(RF_RECEIVE_PIN, INPUT);
-  pinMode(SPEAKER_PIN, OUTPUT);
+  pinMode(RF_D0, INPUT_PULLDOWN);
+  pinMode(RF_D1, INPUT_PULLDOWN);
+  pinMode(RF_D2, INPUT_PULLDOWN);
+  pinMode(RF_D3, INPUT_PULLDOWN);
+  pinMode(RF_D4, INPUT_PULLDOWN);
+  pinMode(RF_D5, INPUT_PULLDOWN);
+  pinMode(RF_D6, INPUT_PULLDOWN);
+  pinMode(RF_D7, INPUT_PULLDOWN);
+  pinMode(RF_VT, INPUT_PULLDOWN);
+  digitalWrite(AUDIO_PIN, 0);
+  digitalWrite(AUDIO_PIN_EN, 0);
   ledcAttach(LED_RED_PIN, 5000, 8);
   ledcAttach(LED_GREEN_PIN, 5000, 8);
   ledcAttach(LED_BLUE_PIN, 5000, 8);
-  digitalWrite(SPEAKER_PIN, HIGH);
   dumpEeprom();
   readEeprom((char*)&module, 0, sizeof(module)); // Initialize module by loading from EEPROM
 

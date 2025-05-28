@@ -48,7 +48,8 @@ void rfListen(void* param) {
 
     // Read the pin and store it as the final bit
     //  (value of digitalRead is either 0 or 1, so a plain OR will stick it at the right boundary)
-    buf = buf | digitalRead(RF_RECEIVE_PIN);
+    //buf = buf | digitalRead(RF_RECEIVE_PIN);
+    buf = 0;
     matchedBits = countSetBitsFixedTime(~(buf ^ rfKey));
     //Serial.printf("%d ", matchedBits);
 
