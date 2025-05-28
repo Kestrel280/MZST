@@ -17,6 +17,9 @@
 #define RF_D7 35
 #define RF_VT 45
 
+/* if not 0, just flash colors and print to serial, for testing; bypass the RF-based LEDs */
+#define SERIALTEST 0
+
 float capsense_threshold = 120000;
 bool last_state = false;
 bool rfKey[8] = {1, 0, 0, 1, 0, 1, 1, 1};
@@ -26,8 +29,11 @@ long capsense_val = 10;
 long capsense_val_old = 10;
 long capsense_val_older = 10;
 
+unsigned int i = 2000000000;
+char mode = 0;
+
 void setup() {
-   Serial.begin(115200);
+   Serial.begin(921600);
 
    ledcAttach(RED_PIN, 5000, 8);
    ledcAttach(GREEN_PIN, 5000, 8);
@@ -48,12 +54,6 @@ void setup() {
 }
 
 void loop() {
-  // if(checkpointTouched()){
-  //   displayColorLED(0,255,0);
-  // }
-  // else{
-  //   displayColorLED(255,0,0);
-  // }
 
   bool readKey[8];
   readKey[0] = digitalRead(RF_D0);
@@ -83,40 +83,24 @@ void loop() {
     }
   }
 
+#if SERIALTEST > 0
+  if (!(++i % (2 << 14))) {
+    mode = ~mode;
+    Serial.printf("%3d | %10u\n", mode, i);
+  }
+  if (mode) {
+    displayColorLED(255, 0, 0);
+  } else {
+    displayColorLED(0, 255, 0);
+  }
+#else
   // Light LED accordingly
   if (match) {
     displayColorLED(255, 0, 0);  // Green
   } else {
     displayColorLED(0, 255, 0);  // Red
   }
-}
-
-
-bool checkpointTouched(){
-  long capsense_val = touchRead(CAPSENSE_PIN);
-  long capsense_3avg = ((capsense_val+capsense_val_old+capsense_val_older)/3);
-  Serial.print(capsense_threshold);
-  Serial.print(",");
-  Serial.println(capsense_3avg);
-
-  if(capsense_3avg < capsense_threshold){
-    if(!last_state){
-      capsense_threshold = capsense_threshold - 3000;
-    }
-    last_state = true;
-    capsense_val_older = capsense_val_old;
-    capsense_val_old = capsense_val;
-    return true;
-  }
-  else{
-    if(last_state){
-      capsense_threshold = capsense_threshold + 3000;
-    }
-    last_state = false;
-    capsense_val_older = capsense_val_old;
-    capsense_val_old = capsense_val;
-    return false;
-  }
+#endif  
 }
 
 void displayColorLED(int r, int g, int b){
