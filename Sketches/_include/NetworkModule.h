@@ -25,6 +25,7 @@ void processModuleSpecificMessage(std::string iss);
 #define AUDIO_PIN 1
 #define AUDIO_PIN_EN 5
 
-#define writeLed(pcolor) ledcWrite(LED_RED_PIN, (pcolor)->r); ledcWrite(LED_GREEN_PIN, (pcolor)->g); ledcWrite(LED_BLUE_PIN, (pcolor)->b)
+void* __color = nullptr;
+#define writeLed(pcolor) if(pcolor) { ledcWrite(LED_RED_PIN, (pcolor)->r); ledcWrite(LED_GREEN_PIN, (pcolor)->g); ledcWrite(LED_BLUE_PIN, (pcolor)->b); __color = (void*)pcolor; }
 
 #endif

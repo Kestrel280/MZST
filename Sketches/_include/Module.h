@@ -8,6 +8,9 @@
 #define SERVER_PORT 5000
 #define ADMIN_PORT 7777
 
+// Message handler for module-specific messages; defined in module-specific implementation files
+void processModuleSpecificMessage(std::string msg);
+
 typedef struct _Module {
 	char networkSsid[MODULE_MAXSSID_LEN];
 	char networkPassword[MODULE_MAXPW_LEN];

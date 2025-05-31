@@ -25,9 +25,11 @@ typedef enum _State {
 struct StateData {
   Color* colorIdle;
   Color* colorOnTouch; // If null, non-receptive to touch
-  StateData(Color* colorIdle, Color* colorOnTouch) {
+  Color* colorRf;
+  StateData(Color* colorIdle, Color* colorOnTouch, Color* colorRf) {
     this->colorIdle = colorIdle;
     this->colorOnTouch = colorOnTouch;
+    this->colorRf = colorRf;
   }
 };
 

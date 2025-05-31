@@ -1,3 +1,5 @@
+/* ESP32S3 Dev Module | esp32 by Espressif Systems, v3.2.0*/
+
 #include "esp_system.h"
 #include "esp32-hal-touch.h"
 
@@ -12,8 +14,8 @@
 const int64_t UNTOUCH_TIMEOUT_US = 1000000;
 
 // Prototypes
-void touchpadCallback(void* param);
-void rfPacketCallback(void* param);
+void touchpadCallback(void* param) __attribute__((interrupt_handler));
+void rfPacketCallback(void* param) __attribute__((interrupt_handler));
 void messageLoop(void* param);
 
 // Globals
@@ -55,6 +57,7 @@ void setup() {
   ledcAttach(LED_RED_PIN, 5000, 8);
   ledcAttach(LED_GREEN_PIN, 5000, 8);
   ledcAttach(LED_BLUE_PIN, 5000, 8);
+  while(!Serial);
   dumpEeprom();
   readEeprom((char*)&module, 0, sizeof(module)); // Initialize module by loading from EEPROM
   
@@ -94,9 +97,10 @@ void setup() {
     }
     vTaskDelay(250);
   }
-  Serial.printf("\nConnected to server at host %s:%d\n", module.serverIp, module.serverPort);
   adminSocketListener.close();
-
+  sendMessage(createOutboundMessage(MTYPE_REGISTER_NODE, touchThreshold));
+  Serial.printf("\nConnected & registered to server at %s:%d\n", module.serverIp, module.serverPort);
+  
   /* ******************* */
   /* Register interrupts */
   /* ******************* */
@@ -109,7 +113,6 @@ void setup() {
   _touchVal = touchRead(TP_PIN);
   touchIncrement = _touchVal / 8;
   touchThreshold = _touchVal + touchIncrement;
-  sendMessage(createOutboundMessage(MTYPE_REGISTER_NODE, touchThreshold));
   touchAttachInterrupt(TP_PIN, &touchpadCallback, touchIncrement);
   Serial.printf("Baseline tp val = %d; set threshold to %d\n", _touchVal, touchThreshold);
 
@@ -159,9 +162,7 @@ void touchpadCallback() {
   if (!inTouchCooldown) {
     inTouchCooldown = true;
     outboundMessageQueue.push(createOutboundMessage(MTYPE_TOUCHED, currentTimeAbs() - timeLastTouchUs));
-    if (stateData->colorOnTouch) {
-      writeLed(stateData->colorOnTouch);
-    }
+    writeLed(stateData->colorOnTouch);
     timeLastTouchUs = currentTimeAbs();
   }
   return;
@@ -169,8 +170,9 @@ void touchpadCallback() {
 
 // ISR for when RF_VT goes high (RF packet received)
 void rfPacketCallback() {
-  char data = 0b0;
-  data = \
+  char stamp = 0b0;
+  // TODO read directly from GPIO register?
+  stamp = \
     digitalRead(RF_D0) << 7 |\
     digitalRead(RF_D1) << 6 |\
     digitalRead(RF_D2) << 5 |\
@@ -179,7 +181,11 @@ void rfPacketCallback() {
     digitalRead(RF_D5) << 2 |\
     digitalRead(RF_D6) << 1 |\
     digitalRead(RF_D7);
-  Serial.printf("RF received: %x\n", data);
+  Serial.printf("RF received stamp: 0x%x\n", stamp);
+
+  // TODO this is just debug
+  writeLed(stateData->colorRf);
+  return;
 }
 
 /* ****************************************

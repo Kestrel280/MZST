@@ -1,22 +1,22 @@
 #include "State.h"
 
 // Data associated with possible states
-//                                                  Standby     On-touch
-StateData SD_INIT_BootStart             = StateData(&colorCyan,         nullptr);
-StateData SD_INIT_WaitingWifi           = StateData(&colorRed,          nullptr);
-StateData SD_INIT_WaitingServer         = StateData(&colorBlue,         nullptr);
-StateData SD_INIT_Complete              = StateData(&colorGreen,        &colorWhite);
-StateData SD_READYRUN_StartNode         = StateData(&colorPurple,       &colorWhite);
-StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorOff,          &colorRed);
-StateData SD_READYRUN_NoTriggersDone    = StateData(&colorRed,          &colorWhite); // TODO when nextUp is hooked up, change on-touch to red
-StateData SD_READYRUN_NextUp            = StateData(&colorBlue,         &colorWhite);
-StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorWhite); // TODO when nextUp is hooked up, change on-touch to red
-StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorWhite); // TODO when nextUp is hooked up, change on-touch to red
-StateData SD_DEFINE_SelectedNode        = StateData(&colorWhite,        nullptr);
-StateData SD_DEFINE_NotInCourse         = StateData(&colorRed,          &colorBlue);
-StateData SD_DEFINE_InCourse            = StateData(&colorDimOrange,    &colorWhite);
-StateData SD_FINISHED_SuccessfulRun     = StateData(&colorGreen,        nullptr);
-StateData SD_FINISHED_UnsuccessfulRun   = StateData(&colorOff,          nullptr);
+//                                                  Standby             On-touch            Rf
+StateData SD_INIT_BootStart             = StateData(&colorCyan,         nullptr,            &colorDimOrange);
+StateData SD_INIT_WaitingWifi           = StateData(&colorRed,          nullptr,            &colorDimOrange);
+StateData SD_INIT_WaitingServer         = StateData(&colorBlue,         nullptr,            &colorDimOrange);
+StateData SD_INIT_Complete              = StateData(&colorGreen,        &colorWhite,        &colorDimOrange);
+StateData SD_READYRUN_StartNode         = StateData(&colorPurple,       &colorWhite,        &colorDimOrange);
+StateData SD_READYRUN_NotPartOfCourse   = StateData(&colorOff,          &colorRed,          &colorDimOrange);
+StateData SD_READYRUN_NoTriggersDone    = StateData(&colorRed,          &colorWhite,        &colorDimOrange); // TODO when nextUp is hooked up, change on-touch to red
+StateData SD_READYRUN_NextUp            = StateData(&colorBlue,         &colorWhite,        &colorDimOrange);
+StateData SD_READYRUN_SomeTriggersDone  = StateData(&colorDimOrange,    &colorWhite,        &colorDimOrange); // TODO when nextUp is hooked up, change on-touch to red
+StateData SD_READYRUN_AllTriggersDone   = StateData(&colorGreen,        &colorWhite,        &colorDimOrange); // TODO when nextUp is hooked up, change on-touch to red
+StateData SD_DEFINE_SelectedNode        = StateData(&colorWhite,        nullptr,            &colorDimOrange);
+StateData SD_DEFINE_NotInCourse         = StateData(&colorRed,          &colorBlue,         &colorDimOrange);
+StateData SD_DEFINE_InCourse            = StateData(&colorDimOrange,    &colorWhite,        &colorDimOrange);
+StateData SD_FINISHED_SuccessfulRun     = StateData(&colorGreen,        nullptr,            &colorDimOrange);
+StateData SD_FINISHED_UnsuccessfulRun   = StateData(&colorOff,          nullptr,            &colorDimOrange);
 
 // Update global 'state' and 'stateData' variables
 // GLOBALS: state, stateData
