@@ -1,12 +1,27 @@
-#include <sdkconfig.h>
+#include <stdio.h>
+
 #include <freertos/FreeRTOS.h>
-#include <esp_log.h>
+#include <sdkconfig.h>
+#include "esp_event.h"
+#include "esp_log.h"
+
 #include "NVSUtil.h"
 #include "Secrets.h"
 
-#include <stdio.h>
+extern bool startWifi();
 
 static const char* TAG = "main";
+
+void nvsSetupDefaults() {
+    ESP_LOGI(TAG, "Populating NVS with default values");
+    nvsSetStr("NTWK_SSID",      NTWK_SSID);
+    nvsSetStr("NTWK_PSWD",      NTWK_PSWD);
+    nvsSetStr("SERVER_IP",      SERVER_IP);
+    nvsSetInt("SERVER_PORT",    5000);
+    nvsSetInt("MODULE_ID",      9999);
+    nvsSetInt("__MZST_MODULE",  1);
+    nvsCommit();
+}
 
 void app_main(void) {
     int i = 0;
@@ -14,19 +29,15 @@ void app_main(void) {
     char* str_out;
     ESP_LOGV(TAG, "app_main entry");
 
-    // Check if NVS is populated
-    nvsInit();
+    // Start event loop
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-    if (!nvsGetInt("__MZST_MODULE", &int_out)) {
-        ESP_LOGI(TAG, "Module does not have data on NVS, populating with defaults from Secrets.h");
-        nvsSetStr("NTWK_SSID",      NTWK_SSID);
-        nvsSetStr("NTWK_PSWD",      NTWK_PSWD);
-        nvsSetStr("SERVER_IP",      SERVER_IP);
-        nvsSetInt("SERVER_PORT",    5000);
-        nvsSetInt("MODULE_ID",      9999);
-        nvsSetInt("__MZST_MODULE",  1);
-        nvsCommit();
-    }
+    // Load NVS and populate it with defaults if necessary
+    nvsInit();
+    if (!nvsGetInt("__MZST_MODULE", &int_out)) nvsSetupDefaults();
+
+    // Connect to WiFi
+    startWifi();
 
     while (1) {
         nvsGetInt("SERVER_PORT", &int_out);
