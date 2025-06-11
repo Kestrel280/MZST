@@ -23,7 +23,9 @@
     "nvs_flash.h": "c",
     "format": "c",
     "event_groups.h": "c",
-    "cstdlib": "c"
+    "cstdlib": "c",
+    "time.h": "c",
+    "_ansi.h": "c"
   },
   "idf.flashType": "UART"
 }

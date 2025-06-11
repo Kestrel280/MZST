@@ -4,6 +4,7 @@
 #include <sdkconfig.h>
 #include "esp_event.h"
 #include "esp_log.h"
+#include "esp_sntp.h" /* gettimeofday */
 
 #include "NVSUtil.h"
 #include "Secrets.h"
@@ -39,10 +40,13 @@ void app_main(void) {
     // Connect to WiFi
     startWifi();
 
+    struct timeval tv_now;
+
     while (1) {
         nvsGetInt("SERVER_PORT", &int_out);
         nvsGetStr("SERVER_IP", &str_out);
-        ESP_LOGI(TAG, "i = %d | NVS SERVER_PORT = %lu | NVS SERVER_IP = %s", i++, int_out, str_out);
+        gettimeofday(&tv_now, NULL);
+        ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, str_out, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
