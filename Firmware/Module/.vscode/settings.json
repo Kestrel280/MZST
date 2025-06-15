@@ -5,8 +5,11 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.portWin": "COM7",
+  "idf.openOcdDebugLevel": 4,
+  "idf.portWin": "COM9",
   "idf.toolsPathWin": "C:\\Espressif",
+  "idf.monitorBaudRate": "115200",
+  "idf.flashBaudRate": "921600",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32s3"
   },
@@ -25,7 +28,11 @@
     "event_groups.h": "c",
     "cstdlib": "c",
     "time.h": "c",
-    "_ansi.h": "c"
+    "_ansi.h": "c",
+    "cerrno": "c",
+    "cstdint": "c",
+    "sdkconfig.h": "c",
+    "sockets.h": "c"
   },
   "idf.flashType": "UART"
 }

@@ -6,7 +6,7 @@
 
 #include "NVSUtil.h"
 
-static const char* TAG = "WiFi";
+static const char* TAG = "MZST_wifi";
 
 // FreeRTOS event group to handle WiFi events
 static EventGroupHandle_t s_wifi_event_group;

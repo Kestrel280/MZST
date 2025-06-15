@@ -5,7 +5,7 @@
 
 #include "NVSUtil.h"
 
-const char* TAG = "nvsutil";    // Logging tag
+const char* TAG = "MZST_nvsutil";    // Logging tag
 nvs_handle_t nvsHandle = 0;     // Initialized in initNvs()
 esp_err_t err;                  // Return value from standard nvs functions
 
