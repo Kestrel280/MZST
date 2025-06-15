@@ -67,7 +67,6 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
 
     char buf[SERVER_RECEIVE_BUF_SIZE];  // Inbound buffer
     int i;
-    int eno;
     ssize_t msgSize;
 
     ESP_LOGI(TAG, "Server message loop running on core %d\n", xPortGetCoreID());
@@ -84,8 +83,11 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
         // --- 2. Process inbound data
         while (1) {
             // Peek the socket: if no data, break -- if data, store it in buf and continue // TODO check to ensure errors are either EAGAIN or EWOULDBLOCK
-            if ((msgSize = recv(sock, buf, SERVER_RECEIVE_BUF_SIZE, MSG_PEEK | MSG_DONTWAIT)) < 0) break;
-            eno = errno; 
+            msgSize = recv(sock, buf, SERVER_RECEIVE_BUF_SIZE, MSG_PEEK | MSG_DONTWAIT);
+            if (msgSize < 0) {
+                if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) break;
+                else ESP_LOGE(TAG, "Unhandled error in serverMessageLoop: 1st recv() got errno %d", errno); 
+            }
             
             // If execution reaches this point, we have data in buf
             // If last char received isn't '\n', scan from beginning until reaching one (if it IS one, skip the scan and just set 'i' to the index of the last char)
@@ -97,7 +99,11 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
             }
 
             // If execution reaches this point (an '\n' was found), buf[0:i] now contains a command
-            recv(sock, buf, msgSize, MSG_DONTWAIT); // Somewhat redundant, but necessary: do another recv, to get the command out of the socket buffer
+            msgSize = recv(sock, buf, msgSize, MSG_DONTWAIT); // Somewhat redundant, but necessary: do another recv, to get the command out of the socket buffer
+            if (msgSize < 0) {
+                if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) break;
+                else ESP_LOGE(TAG, "Unhandled error in serverMessageLoop: 2nd recv() got errno %d", errno); 
+            }
             buf[i] = '\0'; // Replace the newline with a null terminator: allows processMessage() to treat the buf as a string directly
             processCommandFunction(buf);
         }
