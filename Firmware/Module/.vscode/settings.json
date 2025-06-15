@@ -32,7 +32,9 @@
     "cerrno": "c",
     "cstdint": "c",
     "sdkconfig.h": "c",
-    "sockets.h": "c"
+    "sockets.h": "c",
+    "esp_event.h": "c",
+    "stdio.h": "c"
   },
   "idf.flashType": "UART"
 }

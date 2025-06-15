@@ -71,11 +71,10 @@ void app_main(void) {
     // Register with server
     serverSend(MTYPE_REGISTER_NODE, mid, 1234);
 
-    
     struct timeval tv_now;
     while (1) {
         gettimeofday(&tv_now, NULL);
         ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, str_out, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 }

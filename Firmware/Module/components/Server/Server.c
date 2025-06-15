@@ -26,9 +26,15 @@ bool serverConnect(const char* ip, uint16_t port) {
     int eno;
 
     // Set up outbound message ring buffer
+    /* TODO obrbufSlots initialized with maxcount - 1
+        somewhat of a bandaid fix -- we check if queue is non-empty by checking tail != head (aka empty is tail == head)...
+        but, if the semaphor count is initialized to maxcount, then tail == head is ambiguously full or empty
+        so, init'ing with maxcount - 1 means we don't run into this issue, but we also have a queue which is effectively -1 size,
+        and i'm worried this might cause sneaky issues later
+    */
     obrbufHead = obrbufTail = 0;
     obrbufLock = xSemaphoreCreateMutex();
-    obrbufSlots = xSemaphoreCreateCounting(SERVER_OBRBUF_SIZE, SERVER_OBRBUF_SIZE);
+    obrbufSlots = xSemaphoreCreateCounting(SERVER_OBRBUF_SIZE - 1, SERVER_OBRBUF_SIZE - 1); 
 
     // Create socket
     inet_pton(AF_INET, ip, &dest_addr.sin_addr); // Convert IP as string to packed byte format, store in dest_addr.sin_addr
@@ -68,7 +74,7 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
 
     while (1) {
         // --- 1. Check outbound message queue and send any messages
-        if (obrbufHead != obrbufTail) { // Check if there's any outbound messages in the queue (as the only consumer, we can do this safely, without needing to acquire any locks or anything)
+        while (obrbufHead != obrbufTail) { // Check if there's any outbound messages in the queue (as the only consumer, we can do this safely, without needing to acquire any locks or anything)
             if (send(sock, &(obrbuf[obrbufHead]), sizeof(obrbuf[0]), 0) < 0) ESP_LOGE(TAG, "Failure sending outbound message with error code %d", errno);
             else ESP_LOGI(TAG, "Sent message to server with mtype = %d, id = %d, data = %ld", obrbuf[obrbufHead].mtype, obrbuf[obrbufHead].id, obrbuf[obrbufHead].data);
             obrbufHead = (obrbufHead + 1) % SERVER_OBRBUF_SIZE;
@@ -101,6 +107,8 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
 }
 
 bool serverSend(uint16_t mtype, uint16_t id, uint32_t data) {
+    // Warning: this function can block, if the outbound message queue is full!
+
     OutboundMessage obm;
     obm.mtype = mtype;
     obm.id = id;
