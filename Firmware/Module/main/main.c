@@ -13,13 +13,16 @@
 extern bool startWifi();
 
 static const char* TAG = "MZST_main";
-uint16_t mid;
-TaskHandle_t messageLoopTask; // Handle on message-loop thread
+uint16_t mid;                   // Module id, read from NVS
+TaskHandle_t messageLoopTask;   // Handle on message-loop thread
+char* serverIp;                 // This ptr is passed to the Server component, so it must have permanent lifetime and the data must not be modified. Simple enough -- we only do one read from the NVS, and one (primary, non-reconnecting) call to serverConnect()
 
+/* TODO these should be extern, declared in a module-specific implementation */
 void processCommand(char* cmd) {
     ESP_LOGI(TAG, "processing cmd %s", cmd);
     serverSend(MTYPE_ACK, mid, 0);
 }
+int ctype = CTYPE_NODE;
 
 void nvsSetupDefaults() {
     ESP_LOGI(TAG, "Populating NVS with default values");
@@ -54,9 +57,9 @@ void app_main(void) {
     nvsGetInt("MODULE_ID", &int_out);
     mid = (uint16_t)int_out;
     nvsGetInt("SERVER_PORT", &int_out);
-    nvsGetStr("SERVER_IP", &str_out);
-    ESP_LOGI(TAG, "Connecting to server at ip %s...", str_out);
-    serverConnect(str_out, (uint16_t)int_out);
+    nvsGetStr("SERVER_IP", &serverIp);
+    ESP_LOGI(TAG, "Connecting to server at ip %s...", serverIp);
+    serverConnect(serverIp, (uint16_t)int_out, ctype, mid);
 
     // Start message loop with server
     xTaskCreatePinnedToCore(        // Message loop on core 0
@@ -74,7 +77,7 @@ void app_main(void) {
     struct timeval tv_now;
     while (1) {
         gettimeofday(&tv_now, NULL);
-        ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, str_out, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
+        ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, serverIp, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
 }
