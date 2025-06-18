@@ -34,7 +34,8 @@
     "sdkconfig.h": "c",
     "sockets.h": "c",
     "esp_event.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "stdbool.h": "c"
   },
   "idf.flashType": "UART"
 }

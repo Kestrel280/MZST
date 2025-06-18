@@ -1,0 +1,14 @@
+menu "MZST Module Type"
+    choice MZST_MODULE_TYPE
+        prompt "Choose module type to compile for"
+        default MZST_NETWORK_MODULE
+
+        config MZST_NETWORK_MODULE
+            prompt "Network module"
+            bool
+
+        config MZST_TRANSMITTER_MODULE
+            prompt "Transmitter module"
+            bool
+    endchoice
+endmenu

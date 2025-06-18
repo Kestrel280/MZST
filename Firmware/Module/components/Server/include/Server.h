@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #define SERVER_RECEIVE_BUF_SIZE 1024 /* inbound commands must be smaller than this */
 #define SERVER_OBRBUF_SIZE 8
 
@@ -15,7 +17,6 @@
 #define MTYPE_TIMESTAMPRESET 66
 #define MTYPE_ACK            111
 
-
 bool serverConnect(const char* ip, uint16_t port, char ctype, uint16_t id);
 void serverMessageLoop();
-bool serverSend(uint16_t mtype, uint16_t id, uint32_t data);
+bool serverSend(uint16_t mtype, uint16_t id, uint32_t data); 

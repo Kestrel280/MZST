@@ -9,20 +9,15 @@
 #include "NVSUtil.h"
 #include "Server.h"
 #include "Secrets.h"
+#include "MZSTModuleImpl.h"
 
 extern bool startWifi();
 
 static const char* TAG = "MZST_main";
 uint16_t mid;                   // Module id, read from NVS
 TaskHandle_t messageLoopTask;   // Handle on message-loop thread
-char* serverIp;                 // This ptr is passed to the Server component, so it must have permanent lifetime and the data must not be modified. Simple enough -- we only do one read from the NVS, and one (primary, non-reconnecting) call to serverConnect()
-
-/* TODO these should be extern, declared in a module-specific implementation */
-void processCommand(char* cmd) {
-    ESP_LOGI(TAG, "processing cmd %s", cmd);
-    serverSend(MTYPE_ACK, mid, 0);
-}
-int ctype = CTYPE_NODE;
+char* serverIp;                 // This ptr is passed to the Server component, so it must have permanent lifetime and the data must not be modified. Simple enough -- we only do one read from the NVS
+extern int ctype;               // Specified in Module component implementation file, which is selected by MZST_MODULE_TYPE config option
 
 void nvsSetupDefaults() {
     ESP_LOGI(TAG, "Populating NVS with default values");
