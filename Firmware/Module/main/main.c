@@ -45,6 +45,9 @@ void app_main(void) {
     nvsInit();
     if (!nvsGetInt("__MZST_MODULE", &int_out)) nvsSetupDefaults();
 
+    // Initialize module-specific items (mostly hardware/pin setup)
+    initMzstModule();
+
     // Connect to WiFi
     startWifi();
 
@@ -73,6 +76,7 @@ void app_main(void) {
     while (1) {
         gettimeofday(&tv_now, NULL);
         ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, serverIp, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        vTaskDelay(2500 / portTICK_PERIOD_MS);
+        setColor((i % 3) == 0 ? 255 : 0, ((i+1) % 3) == 0 ? 255 : 0, ((i+2) % 3) == 0 ? 255 : 0);
     }
 }
