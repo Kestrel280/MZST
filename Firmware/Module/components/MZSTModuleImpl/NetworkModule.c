@@ -3,6 +3,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "driver/ledc.h"
+#include "driver/touch_sensor.h"
 
 #include "MZSTModuleImpl.h"
 #include "Server.h"
@@ -13,10 +14,14 @@
 #define LED_PIN_R 3
 #define LED_PIN_G 2
 #define LED_PIN_B 4
+#define TOUCHPAD_PIN TOUCH_PAD_NUM7
 
+extern uint16_t mid;    // main.c, loaded from NVS
 static const int ledcCountsPerCycle = (2 << (LEDC_TIMER_RESOLUTION - 1));
 static const char* TAG = "MZST_NtwkModule";
 int ctype = CTYPE_NODE; // Exported global variable
+
+void touchpadIsr();
 
 void initMzstModule() {
 
@@ -65,12 +70,27 @@ void initMzstModule() {
     ledc_channel.gpio_num = LED_PIN_B;
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
+    /* Touchpad configuration */
+    uint32_t tpval;
+    ESP_ERROR_CHECK(touch_pad_init());
+    ESP_ERROR_CHECK(touch_pad_config(TOUCHPAD_PIN));
+    ESP_ERROR_CHECK(touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER));
+    ESP_ERROR_CHECK(touch_pad_fsm_start());
+    ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));
+    ESP_ERROR_CHECK(touch_pad_set_thresh(TOUCHPAD_PIN, tpval * 9 / 8));
+    ESP_ERROR_CHECK(touch_pad_isr_register(touchpadIsr, NULL, TOUCH_PAD_INTR_MASK_ALL));
+    ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE | TOUCH_PAD_INTR_MASK_TIMEOUT));
+    ESP_LOGI(TAG, "Touchpad configured with threshold %lu", tpval * 9 / 8);
+
     return;
 }
 
 void processCommand(char* cmd) {
     ESP_LOGI(TAG, "NTWK module processing cmd %s", cmd);
     serverSend(MTYPE_ACK, 123, 0);
+    uint32_t tpval;
+    ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));
+    ESP_LOGI(TAG, "tpval: %lu", tpval);
 }
 
 void setColor(int r, int g, int b) {
@@ -85,4 +105,8 @@ void setColor(int r, int g, int b) {
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
 
     return;
+}
+
+void touchpadIsr() {
+    serverSend(MTYPE_TOUCHED, mid, 123); // TODO serverSend can, in theory, block; might want a trySend() or something
 }

@@ -39,6 +39,9 @@ bool startWifi() {
     char* ssid;
     char* pswd;
 
+    esp_log_level_set("wifi", ESP_LOG_WARN);        // only log "warning" (or more severe) messages from wifi module
+    esp_log_level_set("wifi_init", ESP_LOG_WARN);
+
     if (!nvsGetStr("NTWK_SSID", &ssid)) ESP_LOGE(TAG, "Cannot connect to WiFi: NTWK_SSID not in NVS");
     if (!nvsGetStr("NTWK_PSWD", &pswd)) ESP_LOGE(TAG, "Cannot connect to WiFi: NTWK_PSWD not in NVS");
 
