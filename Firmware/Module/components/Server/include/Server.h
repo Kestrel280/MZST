@@ -18,5 +18,5 @@
 #define MTYPE_ACK            111
 
 bool serverConnect(const char* ip, uint16_t port, char ctype, uint16_t id);
-void serverMessageLoop();
+void serverMessageLoop(); // ONE ARGUMENT EXPECTED: FN pointer to a command-handler, fn(char*). Prototype must be void(void) 
 bool serverSend(uint16_t mtype, uint16_t id, uint32_t data); 

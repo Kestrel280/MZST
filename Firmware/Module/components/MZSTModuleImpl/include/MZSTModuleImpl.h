@@ -7,18 +7,21 @@
 */
 void initMzstModule();
 
-/* processCommand: (char*) -> ()
+/* processCommandCommon: (char*) -> ()
     Takes a command (null-terminated string) and does some action.
     Typical invocation is from messageLoop.
 */
-void processCommand(char* cmd);
+void processCommandCommon(char* cmd);
 
-/* processCommandCommon: (char*) -> ()
+/* processCommandSpecific: (char*) -> ()
     Fallthrough for implementation-specific processCommand().
-    If no case is found for the incoming command, it falls through to this.
+    If no common case is found for the incoming command, it falls through to a module-specific handler.
+    Note that the Common caller has already primed the command with strtok():
+        this function takes the first non-common token as an argument,
+        and subsequent tokens are retrieved using strtok(NULL, " ").
 */
+void processCommandSpecific(char* token);
 
-void processCommandCommon();
 /* setColor: (int 0:255, int 0:255, int 0:255) -> ()
     Sets LEDs for the module (if they exist).
     If the module has no LEDs, this function should still be defined as a stub.

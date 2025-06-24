@@ -8,4 +8,4 @@ list(APPEND srcs "CommonModule.c")
 
 idf_component_register(SRCS "CommonModule.c" "NetworkModule.c" "${srcs}"
                     INCLUDE_DIRS "include"
-                    REQUIRES Server esp_driver_gpio esp_driver_ledc driver)
+                    REQUIRES NVSUtil Server esp_driver_gpio esp_driver_ledc driver)

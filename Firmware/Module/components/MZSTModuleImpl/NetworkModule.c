@@ -86,30 +86,14 @@ void initMzstModule() {
     return;
 }
 
-void processCommand(char* cmd) {
-    /* Nominally entered by Server's messageLoop()
-    cmd should be a SINGLE, null-terminated command
-        (note that the server sends newline-terminated commands;
-        but by the time the command reaches this function,
-        the newline should have been replaced with a null byte)
+void processCommandSpecific(char* token) {
+    /* Fallthrough for processCommandCommon
+    Module-specific command handling
+    strtok() has already been primed with the full command. Special cases and prefixes have already been handled
+    Initial token passed as arg; strtok(NULL, " ") returns pointer to next token
     */
-    char* token;
-    ESP_LOGI(TAG, "NTWK module processing cmd %s", cmd);
 
-    // No while-loop to process commands: input is already a well-formed single command
-    // strtok() extracts the first space-separated token from the command
-    //  The space is replaced with a null byte, so token is a usable null-terminated string
-    //  The value of cmd is advanced to point to the start of the NEXT token
-    token = strtok(cmd, " ");
-
-    if (strcmp(token, "TEST") == 0) {
-        ESP_LOGI(TAG, "TEST received");
-    }
-
-    serverSend(MTYPE_ACK, 123, 0);
-    uint32_t tpval;
-    ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));
-    ESP_LOGI(TAG, "tpval: %lu", tpval);
+    ESP_LOGI(TAG, "processCommandSpecific with initial token [%s]", token);
 }
 
 void setColor(int r, int g, int b) {

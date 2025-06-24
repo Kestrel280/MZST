@@ -61,13 +61,13 @@ void app_main(void) {
 
     // Start message loop with server
     xTaskCreatePinnedToCore(        // Message loop on core 0
-        serverMessageLoop,  /* Task function. */
-        "Message_Loop",     /* name of task. */
-        16384,              /* Stack size of task */
-        &processCommand,    /* parameter of the task */
-        0,                  /* priority of the task */
-        &messageLoopTask,   /* Task handle to keep track of created task */
-        0);                 /* pin task to core 0 */
+        serverMessageLoop,      /* Task function. */
+        "Message_Loop",         /* name of task. */
+        16384,                  /* Stack size of task */
+        &processCommandCommon,  /* parameter of the task */
+        0,                      /* priority of the task */
+        &messageLoopTask,       /* Task handle to keep track of created task */
+        0);                     /* pin task to core 0 */
 
     // Register with server
     serverSend(MTYPE_REGISTER_NODE, mid, 1234);
