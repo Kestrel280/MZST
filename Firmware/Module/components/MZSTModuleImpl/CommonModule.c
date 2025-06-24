@@ -48,14 +48,18 @@ void processCommandCommon(char* cmd) {
         s1 = strtok(NULL, " "); // What value to update
         s2 = strtok(NULL, " "); // New value
 
-        if (strcmp(s1, "NETWORKSSID") == 0)             nvsSetStr(NVS_NTWK_SSID_KEY, s2);
-        else if (strcmp(s1, "NETWORKPASSWORD") == 0)    nvsSetStr(NVS_NTWK_PSWD_KEY, s2);
-        else if (strcmp(s1, "SERVERIP") == 0)           nvsSetStr(NVS_SERVER_IP_KEY, s2);
-        else if (strcmp(s1, "SERVERPORT") == 0)         nvsSetInt(NVS_SERVER_PORT_KEY, atoi(s2));
-        else if (strcmp(s1, "MODULEID") == 0)           nvsSetInt(NVS_VERSION_KEY, atoi(s2));
+        bool success = false;
+        if (strcmp(s1, "NETWORKSSID") == 0)             success = nvsSetStr(NVS_NTWK_SSID_KEY, s2);
+        else if (strcmp(s1, "NETWORKPASSWORD") == 0)    success = nvsSetStr(NVS_NTWK_PSWD_KEY, s2);
+        else if (strcmp(s1, "SERVERIP") == 0)           success = nvsSetStr(NVS_SERVER_IP_KEY, s2);
+        else if (strcmp(s1, "SERVERPORT") == 0)         success = nvsSetInt(NVS_SERVER_PORT_KEY, atoi(s2));
+        else if (strcmp(s1, "MODULEID") == 0)           success = nvsSetInt(NVS_VERSION_KEY, atoi(s2));
 
-        nvsCommit();
-        ESP_LOGI(TAG, "Wrote value [%s] to NVS [%s] field", s2, s1);
+        if (success && nvsCommit()) {
+            ESP_LOGI(TAG, "Wrote value [%s] to NVS [%s] field", s2, s1);
+        } else {
+            ESP_LOGI(TAG, "Failure writing value [%s] to NVS [%s] field", s2, s1);
+        }
     }
 
     else {

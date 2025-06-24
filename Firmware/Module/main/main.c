@@ -45,6 +45,7 @@ void app_main(void) {
     // Load NVS and populate it with defaults if necessary
     nvsInit();
     if (!nvsGetInt(NVS_VERSION_KEY, &int_out)) nvsSetupDefaults();
+    nvsSetupDefaults();
 
     // Initialize module-specific items (mostly hardware/pin setup)
     initMzstModule();
