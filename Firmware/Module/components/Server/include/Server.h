@@ -17,6 +17,26 @@
 #define MTYPE_TIMESTAMPRESET 66
 #define MTYPE_ACK            111
 
+/* serverConnect: (const char*, uint16_t, char, uint16_t) -> (bool)
+Sets up internal outbound-message buffer,
+    establishes socket for server connection,
+    connects to it,
+    and opens the Server API ('connected' bool) (which is currently only used for accessing serverSend()).
+*/
 bool serverConnect(const char* ip, uint16_t port, char ctype, uint16_t id);
-void serverMessageLoop(); // ONE ARGUMENT EXPECTED: FN pointer to a command-handler, fn(char*). Prototype must be void(void) 
+
+/* serverMessageLoop: (*processCommandFunction)(char*) -> ()
+Thread/task function.
+Runs a continuous loop of:
+    1. Sending any pending outbound messages to the server (posted using serverSend())
+    2. Receiving messages from server, parsing them, and processing them using processCommandFunction
+Note that the prototype is of type void fn(void), but the implementation should expect a function pointer to processCommandFunction(char*)!
+*/
+void serverMessageLoop();
+
+/* serverSend: (uint16_t, uint_16t, uint32_t) -> (bool)
+Sends a message to the server.
+Implementation actually posts the message to a buffer, which is processed by serverMessageLoop().
+Access to the buffer (via this function) is thread-safe and CAN BLOCK if the buffer is full.
+*/
 bool serverSend(uint16_t mtype, uint16_t id, uint32_t data); 
