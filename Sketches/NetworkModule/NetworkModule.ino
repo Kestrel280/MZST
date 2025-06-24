@@ -226,7 +226,7 @@ void feedbackLoop(void* param) {
     // Unset the pendingServerUntouch and inTouchCooldown flags
     if (pendingServerUntouch && !inTouchCooldown) {
       vTaskDelay((TickType_t) (100 / portTICK_PERIOD_MS)); // ~100ms delay before unsetting flags, to avoid re-touch on release. TODO do this better
-      inTouchCooldown = false;
+      inTouchCooldown = false;c:\Users\downe\Documents\Repos\MZST\Sketches\_include\Module.h
       pendingServerUntouch = false;
       writeLed(stateData->colorIdle);
     }

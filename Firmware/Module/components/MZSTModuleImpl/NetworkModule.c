@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -86,7 +87,25 @@ void initMzstModule() {
 }
 
 void processCommand(char* cmd) {
+    /* Nominally entered by Server's messageLoop()
+    cmd should be a SINGLE, null-terminated command
+        (note that the server sends newline-terminated commands;
+        but by the time the command reaches this function,
+        the newline should have been replaced with a null byte)
+    */
+    char* token;
     ESP_LOGI(TAG, "NTWK module processing cmd %s", cmd);
+
+    // No while-loop to process commands: input is already a well-formed single command
+    // strtok() extracts the first space-separated token from the command
+    //  The space is replaced with a null byte, so token is a usable null-terminated string
+    //  The value of cmd is advanced to point to the start of the NEXT token
+    token = strtok(cmd, " ");
+
+    if (strcmp(token, "TEST") == 0) {
+        ESP_LOGI(TAG, "TEST received");
+    }
+
     serverSend(MTYPE_ACK, 123, 0);
     uint32_t tpval;
     ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));

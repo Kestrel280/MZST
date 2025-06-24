@@ -4,6 +4,8 @@ elseif(CONFIG_MZST_TRANSMITTER_MODULE)
     set(srcs TransmitterModule.c)
 endif()
 
-idf_component_register(SRCS "NetworkModule.c" "${srcs}"
+list(APPEND srcs "CommonModule.c")
+
+idf_component_register(SRCS "CommonModule.c" "NetworkModule.c" "${srcs}"
                     INCLUDE_DIRS "include"
                     REQUIRES Server esp_driver_gpio esp_driver_ledc driver)
