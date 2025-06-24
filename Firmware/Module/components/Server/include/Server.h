@@ -1,3 +1,6 @@
+#ifndef MZST_SERVER_H
+#define MZST_SERVER_H
+
 #include <stdbool.h>
 
 #define SERVER_RECEIVE_BUF_SIZE 1024 /* inbound commands must be smaller than this */
@@ -40,3 +43,5 @@ Implementation actually posts the message to a buffer, which is processed by ser
 Access to the buffer (via this function) is thread-safe and CAN BLOCK if the buffer is full.
 */
 bool serverSend(uint16_t mtype, uint16_t id, uint32_t data); 
+
+#endif

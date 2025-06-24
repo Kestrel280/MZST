@@ -1,3 +1,6 @@
+#ifndef MZST_WIFI_H
+#define MZST_WIFI_H
+
 #include <string.h>
 
 #include "esp_wifi.h"
@@ -73,3 +76,5 @@ bool startWifi() {
 
     return true;
 }
+
+#endif

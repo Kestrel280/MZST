@@ -9,6 +9,13 @@ const char* TAG = "MZST_nvsutil";    // Logging tag
 nvs_handle_t nvsHandle = 0;     // Initialized in initNvs()
 esp_err_t err;                  // Return value from standard nvs functions
 
+const char* NVS_NTWK_SSID_KEY   = "NTWK_SSID";
+const char* NVS_NTWK_PSWD_KEY   = "NTWK_PSWD";
+const char* NVS_SERVER_IP_KEY   = "SERVER_IP";
+const char* NVS_SERVER_PORT_KEY = "SERVER_PORT";
+const char* NVS_MODULE_ID_KEY   = "MODULE_ID";
+const char* NVS_VERSION_KEY     = "__MZST_MODULE";
+
 #define __nvs_check_init() if (!nvsHandle) {ESP_LOGE(TAG, "%s called before initNvs()", __PRETTY_FUNCTION__); exit(1); }
 
 void nvsInit() {

@@ -1,11 +1,16 @@
+#ifndef MZST_NVSUTIL_H
+#define MZST_NVSUTIL_H
+
 #include "esp_system.h"
 
-const char* NVS_NTWK_SSID_KEY   = "NTWK_SSID";
-const char* NVS_NTWK_PSWD_KEY   = "NTWK_PSWD";
-const char* NVS_SERVER_IP_KEY   = "SERVER_IP";
-const char* NVS_SERVER_PORT_KEY = "SERVER_PORT";
-const char* NVS_MODULE_ID_KEY   = "MODULE_ID";
-const char* NVS_VERSION_KEY     = "__MZST_MODULE";
+// Defined in NVSUtil.c
+// Using these instead of #defines to reduce code size. Unnecessary optimization
+extern const char* NVS_NTWK_SSID_KEY;
+extern const char* NVS_NTWK_PSWD_KEY;
+extern const char* NVS_SERVER_IP_KEY;
+extern const char* NVS_SERVER_PORT_KEY;
+extern const char* NVS_MODULE_ID_KEY;
+extern const char* NVS_VERSION_KEY;
 
 void nvsInit();                                     // Initial NVS setup -- required before calling any other NVSUtil function
 bool nvsGetInt(const char* key, uint32_t* out);     // Retrieve int32 value from NVS, stores it in 'out'. Returns 'false' on error (incl. key not found).
@@ -15,3 +20,5 @@ bool nvsSetStr(const char* key, const char* val);   // Set string on NVS. Return
 bool nvsCommit();                                   // Commits any changes specified by nvsSet...() functions.
 void nvsDump();                                     // (unimplemented) Prints all key:value pairs on NVS.
 void nvsWipe();                                     // (unimplemented) Wipes all NVS data.
+
+#endif

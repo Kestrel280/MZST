@@ -1,3 +1,6 @@
+#ifndef MZST_MODULEIMPL_H
+#define MZST_MODULEIMPL_H
+
 /* Module implementation files must define all of the following functions, unless functions are labelled Common */
 
 /* initMzstModule: () -> ()
@@ -33,3 +36,5 @@ Thread/task function.
 Performs any feedback-submodule work.
 */
 void feedbackLoop();
+
+#endif
