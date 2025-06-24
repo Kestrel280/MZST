@@ -22,12 +22,12 @@ extern int ctype;               // Specified in Module component implementation 
 
 void nvsSetupDefaults() {
     ESP_LOGI(TAG, "Populating NVS with default values");
-    nvsSetStr("NTWK_SSID",      NTWK_SSID);
-    nvsSetStr("NTWK_PSWD",      NTWK_PSWD);
-    nvsSetStr("SERVER_IP",      SERVER_IP);
-    nvsSetInt("SERVER_PORT",    5000);
-    nvsSetInt("MODULE_ID",      9999);
-    nvsSetInt("__MZST_MODULE",  1);
+    nvsSetStr(NVS_NTWK_SSID_KEY,    NTWK_SSID);
+    nvsSetStr(NVS_NTWK_PSWD_KEY,    NTWK_PSWD);
+    nvsSetStr(NVS_SERVER_IP_KEY,    SERVER_IP);
+    nvsSetInt(NVS_SERVER_PORT_KEY,  5000);
+    nvsSetInt(NVS_MODULE_ID_KEY,    9999);
+    nvsSetInt(NVS_VERSION_KEY,      1);
     nvsCommit();
 }
 
@@ -44,7 +44,7 @@ void app_main(void) {
 
     // Load NVS and populate it with defaults if necessary
     nvsInit();
-    if (!nvsGetInt("__MZST_MODULE", &int_out)) nvsSetupDefaults();
+    if (!nvsGetInt(NVS_VERSION_KEY, &int_out)) nvsSetupDefaults();
 
     // Initialize module-specific items (mostly hardware/pin setup)
     initMzstModule();
@@ -53,10 +53,10 @@ void app_main(void) {
     startWifi();
 
     // Connect to server
-    nvsGetInt("MODULE_ID", &int_out);
+    nvsGetInt(NVS_MODULE_ID_KEY, &int_out);
     mid = (uint16_t)int_out;
-    nvsGetInt("SERVER_PORT", &int_out);
-    nvsGetStr("SERVER_IP", &serverIp);
+    nvsGetInt(NVS_SERVER_PORT_KEY, &int_out);
+    nvsGetStr(NVS_SERVER_IP_KEY, &serverIp);
     ESP_LOGI(TAG, "Connecting to server at ip %s...", serverIp);
     serverConnect(serverIp, (uint16_t)int_out, ctype, mid);
 

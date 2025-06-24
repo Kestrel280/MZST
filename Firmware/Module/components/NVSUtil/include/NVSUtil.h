@@ -1,5 +1,12 @@
 #include "esp_system.h"
 
+const char* NVS_NTWK_SSID_KEY   = "NTWK_SSID";
+const char* NVS_NTWK_PSWD_KEY   = "NTWK_PSWD";
+const char* NVS_SERVER_IP_KEY   = "SERVER_IP";
+const char* NVS_SERVER_PORT_KEY = "SERVER_PORT";
+const char* NVS_MODULE_ID_KEY   = "MODULE_ID";
+const char* NVS_VERSION_KEY     = "__MZST_MODULE";
+
 void nvsInit();                                     // Initial NVS setup -- required before calling any other NVSUtil function
 bool nvsGetInt(const char* key, uint32_t* out);     // Retrieve int32 value from NVS, stores it in 'out'. Returns 'false' on error (incl. key not found).
 bool nvsGetStr(const char* key, char** pOut);       // Retrieve string from NVS, stores it in heap and places pointer in 'pOut'. Returns 'false' if key not found.

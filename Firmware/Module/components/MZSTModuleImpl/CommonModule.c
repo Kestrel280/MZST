@@ -48,11 +48,14 @@ void processCommandCommon(char* cmd) {
         s1 = strtok(NULL, " "); // What value to update
         s2 = strtok(NULL, " "); // New value
 
-        if (strcmp(s1, "NETWORKSSID") == 0)             ESP_LOGI(TAG, "write NVS NETWORKSSID");
-        else if (strcmp(s1, "NETWORKPASSWORD") == 0)    ESP_LOGI(TAG, "write NVS NETWORKPASSWORD");
-        else if (strcmp(s1, "SERVERIP") == 0)           ESP_LOGI(TAG, "write NVS SERVERIP");
-        else if (strcmp(s1, "SERVERPORT") == 0)         ESP_LOGI(TAG, "write NVS SERVERPORT");
-        else if (strcmp(s1, "MODULEID") == 0)           ESP_LOGI(TAG, "write NVS MODULEID");
+        if (strcmp(s1, "NETWORKSSID") == 0)             nvsSetStr(NVS_NTWK_SSID_KEY, s2);
+        else if (strcmp(s1, "NETWORKPASSWORD") == 0)    nvsSetStr(NVS_NTWK_PSWD_KEY, s2);
+        else if (strcmp(s1, "SERVERIP") == 0)           nvsSetStr(NVS_SERVER_IP_KEY, s2);
+        else if (strcmp(s1, "SERVERPORT") == 0)         nvsSetInt(NVS_SERVER_PORT_KEY, atoi(s2));
+        else if (strcmp(s1, "MODULEID") == 0)           nvsSetInt(NVS_VERSION_KEY, atoi(s2));
+
+        nvsCommit();
+        ESP_LOGI(TAG, "Wrote value [%s] to NVS [%s] field", s2, s1);
     }
 
     else {
