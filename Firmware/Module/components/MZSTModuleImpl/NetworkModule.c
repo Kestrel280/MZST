@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <freertos/FreeRTOS.h>
 #include "esp_err.h"
 #include "esp_log.h"
 #include "driver/ledc.h"
@@ -112,4 +113,11 @@ void setColor(int r, int g, int b) {
 
 void touchpadIsr() {
     serverSend(MTYPE_TOUCHED, mid, 123); // TODO serverSend can, in theory, block; might want a trySend() or something
+}
+
+void feedbackLoop() {
+    while (1) {
+        ESP_LOGI(TAG, "... feedback loop ...");
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
 }

@@ -27,3 +27,9 @@ void processCommandSpecific(char* token);
     If the module has no LEDs, this function should still be defined as a stub.
 */
 void setColor(int r, int g, int b);
+
+/* feedbackLoop: () -> ()
+Thread/task function.
+Performs any feedback-submodule work.
+*/
+void feedbackLoop();
