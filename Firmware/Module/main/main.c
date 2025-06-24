@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include "esp_sntp.h" /* gettimeofday */
 
+#include "AdminListener.h"
 #include "NVSUtil.h"
 #include "Server.h"
 #include "Secrets.h"
@@ -15,6 +16,7 @@ extern bool startWifi();
 
 static const char* TAG = "MZST_main";
 uint16_t mid;                   // Module id, read from NVS
+TaskHandle_t adminLoopTask;     // Handle on admin listener-loop thread
 TaskHandle_t messageLoopTask;   // Handle on message-loop thread
 TaskHandle_t feedbackLoopTask;  // Handle on feedback submodule-loop thread
 char* serverIp;                 // This ptr is passed to the Server component, so it must have permanent lifetime and the data must not be modified. Simple enough -- we only do one read from the NVS
@@ -53,6 +55,16 @@ void app_main(void) {
     // Connect to WiFi
     startWifi();
 
+    // Start listener for admin connections
+    xTaskCreatePinnedToCore(        // Message loop on core 0
+        adminListenerLoop,      /* Task function. */
+        "Admin_Loop",         /* name of task. */
+        16384,                  /* Stack size of task */
+        &processCommandCommon,  /* parameter of the task */
+        0,                      /* priority of the task */
+        &adminLoopTask,       /* Task handle to keep track of created task */
+        0);                     /* pin task to core 0 */
+
     // Connect to server
     nvsGetInt(NVS_MODULE_ID_KEY, &int_out);
     mid = (uint16_t)int_out;
@@ -88,7 +100,7 @@ void app_main(void) {
     while (1) {
         gettimeofday(&tv_now, NULL);
         ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, serverIp, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
-        vTaskDelay(2500 / portTICK_PERIOD_MS);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
         setColor((i % 3) == 0 ? 255 : 0, ((i+1) % 3) == 0 ? 255 : 0, ((i+2) % 3) == 0 ? 255 : 0);
     }
 }
