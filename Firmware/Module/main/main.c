@@ -47,7 +47,6 @@ void app_main(void) {
     // Load NVS and populate it with defaults if necessary
     nvsInit();
     if (!nvsGetInt(NVS_VERSION_KEY, &int_out)) nvsSetupDefaults();
-    nvsSetupDefaults();
 
     // Initialize module-specific items (mostly hardware/pin setup)
     initMzstModule();
@@ -94,7 +93,7 @@ void app_main(void) {
         1);                     /* pin task to core 1 */
 
     // Register with server
-    serverSend(MTYPE_REGISTER_NODE, mid, 1234);
+    serverSend(ctype, mid, 1234);
 
     struct timeval tv_now;
     while (1) {
