@@ -18,7 +18,8 @@
 #define RF_D6 GPIO_NUM_2
 #define RF_D7 GPIO_NUM_1
 #define RF_TE GPIO_NUM_43
-
+#define PUSH_BUTTON GPIO_NUM_9
+#define DEBUG_LED GPIO_NUM_8
 
 struct timeval timeLastTransmit;
 static const char* TAG = "MZST_TrnsModule";
@@ -26,6 +27,9 @@ int ctype = CTYPE_TRNS; // Exported global variable
 static char stamp = 0b0; // Data stamp, increments with every transmit
 
 void transmit(char data);
+static void IRAM_ATTR debugButtonCallback(void* args) {
+    transmit(++stamp);
+}
 
 void initMzstModule() {
 
@@ -39,6 +43,12 @@ void initMzstModule() {
     rf_pin_config.pull_down_en = 0;
     rf_pin_config.pull_up_en = 0;
     ESP_ERROR_CHECK(gpio_config(&rf_pin_config));
+
+    /* Push button configuration */
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));
+    ESP_ERROR_CHECK(gpio_set_intr_type(PUSH_BUTTON, GPIO_INTR_POSEDGE));
+    ESP_ERROR_CHECK(gpio_isr_handler_add(PUSH_BUTTON, debugButtonCallback, NULL));
+    ESP_ERROR_CHECK(gpio_input_enable(PUSH_BUTTON));
 
     return;
 }
@@ -80,5 +90,5 @@ void transmit(char data) {
     gpio_set_level(RF_D7, (stamp & 0b00000001) != 0);
     gpio_set_level(RF_TE, 1);
     gpio_set_level(RF_TE, 0);
-    ESP_LOGI(TAG, "Transmitted stamp 0x%x at timestamp %6lli.%6lli\n", stamp, (int64_t)timeLastTransmit.tv_sec, (int64_t)timeLastTransmit.tv_usec);
+    ESP_EARLY_LOGI(TAG, "Transmitted stamp 0x%x at timestamp %6lli.%6lli\n", stamp, (int64_t)timeLastTransmit.tv_sec, (int64_t)timeLastTransmit.tv_usec);
 }
