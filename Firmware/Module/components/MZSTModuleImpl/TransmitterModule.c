@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 
 #include <freertos/FreeRTOS.h>
 #include "esp_log.h"
+#include "esp_sntp.h" /* gettimeofday */
 #include "driver/gpio.h"
 
 #include "MZSTModuleImpl.h"
@@ -18,8 +20,12 @@
 #define RF_TE GPIO_NUM_43
 
 
+struct timeval timeLastTransmit;
 static const char* TAG = "MZST_TrnsModule";
 int ctype = CTYPE_TRNS; // Exported global variable
+static char stamp = 0b0; // Data stamp, increments with every transmit
+
+void transmit(char data);
 
 void initMzstModule() {
 
@@ -43,8 +49,12 @@ void processCommandSpecific(char* token) {
     strtok() has already been primed with the full command. Special cases and prefixes have already been handled
     Initial token passed as arg; strtok(NULL, " ") returns pointer to next token
     */
-
     ESP_LOGI(TAG, "processCommandSpecific with initial token [%s]", token);
+
+    if (strcmp(token, "TRANSMIT") == 0) {
+        transmit(++stamp);
+        strtok(NULL, " ");
+    }
 }
 
 void feedbackLoop() {
@@ -56,4 +66,19 @@ void feedbackLoop() {
 
 void setColor(int r, int g, int b) {
     return;
+}
+
+void transmit(char data) {
+    gettimeofday(&timeLastTransmit, NULL);
+    gpio_set_level(RF_D0, (stamp & 0b10000000) != 0);
+    gpio_set_level(RF_D1, (stamp & 0b01000000) != 0);
+    gpio_set_level(RF_D2, (stamp & 0b00100000) != 0);
+    gpio_set_level(RF_D3, (stamp & 0b00010000) != 0);
+    gpio_set_level(RF_D4, (stamp & 0b00001000) != 0);
+    gpio_set_level(RF_D5, (stamp & 0b00000100) != 0);
+    gpio_set_level(RF_D6, (stamp & 0b00000010) != 0);
+    gpio_set_level(RF_D7, (stamp & 0b00000001) != 0);
+    gpio_set_level(RF_TE, 1);
+    gpio_set_level(RF_TE, 0);
+    ESP_LOGI(TAG, "Transmitted stamp 0x%x at timestamp %6lli.%6lli\n", stamp, (int64_t)timeLastTransmit.tv_sec, (int64_t)timeLastTransmit.tv_usec);
 }
