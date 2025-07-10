@@ -6,7 +6,7 @@
     "board/esp32s3-builtin.cfg"
   ],
   "idf.openOcdDebugLevel": 4,
-  "idf.portWin": "COM8",
+  "idf.portWin": "COM9",
   "idf.toolsPathWin": "C:\\Espressif",
   "idf.monitorBaudRate": "115200",
   "idf.flashBaudRate": "921600",

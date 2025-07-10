@@ -5,10 +5,10 @@
 
 #include "Server.h"
 
-#define __server_check_connect_called() if (!sock) {ESP_LOGE(TAG, "%s called before serverConnect()", __PRETTY_FUNCTION__); exit(1); }
+#define __server_check_connect_called() if (!sock) {ESP_LOGE(TAG, "%s called before serverConnect()", __PRETTY_FUNCTION__); }
 
 static const char* TAG = "MZST_server";
-static int sock;                        // Initialized with call to serverConnect()
+static int sock = 0;                    // Initialized with call to serverConnect()
 static volatile bool connected = false; // Initialized with call to serverConnect(): "lock" on using serverSend() (and possibly other future Server API calls)
 static char* serverIp = NULL;           // Initialized with call to serverConnect()
 static int serverPort;                  // Initialized with call to serverConnect()
@@ -141,6 +141,7 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
                 if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
                     break;
                 } else if ((errno == ENOTCONN) || (errno == ECONNRESET)) {
+                    ESP_LOGE(TAG, "Rare case in server.c: connection reset while parsing inbound data. Recovery from this case has not been tested!");
                     __serverReconnect();
                     continue; // TODO can't continue from here, in inner loop. goto...?
                 } else {

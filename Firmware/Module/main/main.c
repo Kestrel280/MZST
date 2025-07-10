@@ -46,7 +46,10 @@ void app_main(void) {
 
     // Load NVS and populate it with defaults if necessary
     nvsInit();
-    if (!nvsGetInt(NVS_VERSION_KEY, &int_out)) nvsSetupDefaults();
+    if (!nvsGetInt(NVS_VERSION_KEY, &int_out)) {
+        ESP_LOGI(TAG, "Module key not found on NVS: setting NVS defaults");
+        nvsSetupDefaults();
+    }
     // nvsSetupDefaults();
 
     // Initialize module-specific items (mostly hardware/pin setup)
@@ -56,13 +59,13 @@ void app_main(void) {
     startWifi();
 
     // Start listener for admin connections
-    xTaskCreatePinnedToCore(        // Message loop on core 0
+    xTaskCreatePinnedToCore(    // Message loop on core 0
         adminListenerLoop,      /* Task function. */
-        "Admin_Loop",         /* name of task. */
+        "Admin_Loop",           /* name of task. */
         16384,                  /* Stack size of task */
         &processCommandCommon,  /* parameter of the task */
         0,                      /* priority of the task */
-        &adminLoopTask,       /* Task handle to keep track of created task */
+        &adminLoopTask,         /* Task handle to keep track of created task */
         0);                     /* pin task to core 0 */
 
     // Connect to server
@@ -70,7 +73,7 @@ void app_main(void) {
     mid = (uint16_t)int_out;
     nvsGetInt(NVS_SERVER_PORT_KEY, &int_out);
     nvsGetStr(NVS_SERVER_IP_KEY, &serverIp);
-    ESP_LOGI(TAG, "Connecting to server at ip %s...", serverIp);
+    ESP_LOGI(TAG, "Module ID %d connecting to server at %s:%li...", mid, serverIp, int_out);
     serverConnect(serverIp, (uint16_t)int_out, ctype, mid);
 
     // Start message loop with server

@@ -8,7 +8,7 @@
 
 static const char* TAG = "MZST_AdminListener";
 
-void adminListenerLoop(void) {
+void adminListenerLoop(void (*processCommandFunction)(char* cmd)) {
     char buf[ADMIN_RECEIVE_BUF_SIZE];
     struct sockaddr_in dest_addr, client_addr;
     socklen_t client_addr_len;
@@ -46,7 +46,6 @@ void adminListenerLoop(void) {
 
     while (1) {
         // Accept a connection
-        ESP_LOGI(TAG, "adminlistener");
         clientFd = accept(adminSock, (struct sockaddr*)&client_addr, &client_addr_len);
         if (clientFd == -1) {
             if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) vTaskDelay(250 / portTICK_PERIOD_MS);
@@ -56,7 +55,10 @@ void adminListenerLoop(void) {
                 vTaskDelete(NULL);
             }
         } else {
-            ESP_LOGI(TAG, "Accepted admin connection");
+            msgSize = recv(clientFd, buf, ADMIN_RECEIVE_BUF_SIZE, 0);
+            buf[msgSize] = '\x00';
+            ESP_LOGI(TAG, "Admin sent cmd '%s'", buf);
+            processCommandFunction(buf);
             close(clientFd);
         }
     }

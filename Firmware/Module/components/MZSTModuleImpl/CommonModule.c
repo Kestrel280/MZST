@@ -53,13 +53,17 @@ void processCommandCommon(char* cmd) {
         else if (strcmp(s1, "NETWORKPASSWORD") == 0)    success = nvsSetStr(NVS_NTWK_PSWD_KEY, s2);
         else if (strcmp(s1, "SERVERIP") == 0)           success = nvsSetStr(NVS_SERVER_IP_KEY, s2);
         else if (strcmp(s1, "SERVERPORT") == 0)         success = nvsSetInt(NVS_SERVER_PORT_KEY, atoi(s2));
-        else if (strcmp(s1, "MODULEID") == 0)           success = nvsSetInt(NVS_VERSION_KEY, atoi(s2));
+        else if (strcmp(s1, "MODULEID") == 0)           success = nvsSetInt(NVS_MODULE_ID_KEY, atoi(s2));
 
         if (success && nvsCommit()) {
             ESP_LOGI(TAG, "Wrote value [%s] to NVS [%s] field", s2, s1);
         } else {
             ESP_LOGI(TAG, "Failure writing value [%s] to NVS [%s] field", s2, s1);
         }
+        return;
+    } else if (strcmp(token, "DEBUG_LOG") == 0) {
+        ESP_LOGI(TAG, "Processed debug-log command");
+        return;
     }
 
     else {
