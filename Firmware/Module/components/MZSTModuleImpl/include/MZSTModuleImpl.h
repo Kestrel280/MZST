@@ -1,6 +1,13 @@
 #ifndef MZST_MODULEIMPL_H
 #define MZST_MODULEIMPL_H
 
+// Maximum number of states the node can store
+#define MAX_CLIENT_STATES 16
+
+// Helpers to keep track of state
+typedef struct _Color { int r, g, b; } Color;
+typedef struct _State { Color colorNeutral, colorTouched; } State;
+
 /* Module implementation files must define all of the following functions, unless functions are labelled Common */
 
 /* initMzstModule: () -> ()

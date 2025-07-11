@@ -11,6 +11,8 @@
 extern uint16_t mid;    // main.c, loaded from NVS
 static const char* TAG = "MZST_CommonModule";
 
+State states[MAX_CLIENT_STATES] = {};
+
 void processCommandCommon(char* cmd) {
     /* Nominally entered by Server's messageLoop()
     cmd should be a SINGLE, null-terminated command
@@ -61,12 +63,18 @@ void processCommandCommon(char* cmd) {
             ESP_LOGI(TAG, "Failure writing value [%s] to NVS [%s] field", s2, s1);
         }
         return;
+    } else if (strcmp(token, "STATE_DEFINE") == 0) {
+        int stateId = atoi(strtok(NULL, " "));
+        if (stateId >= MAX_CLIENT_STATES) { ESP_LOGE(TAG, "Server trying to define state #%d, but MAX_CLIENT_STATES is %d", stateId, MAX_CLIENT_STATES); return; }
+        Color colorNeutral = {.r = atoi(strtok(NULL, " ")), .g = atoi(strtok(NULL, " ")), .b = atoi(strtok(NULL, " "))};
+        Color colorTouched = {.r = atoi(strtok(NULL, " ")), .g = atoi(strtok(NULL, " ")), .b = atoi(strtok(NULL, " "))};
+        states[stateId].colorNeutral = colorNeutral;
+        states[stateId].colorTouched = colorTouched;
+        ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
     } else if (strcmp(token, "DEBUG_LOG") == 0) {
         ESP_LOGI(TAG, "Processed debug-log command");
         return;
-    }
-
-    else {
+    } else {
         ESP_LOGI(TAG, "... no common case found for command, falling through to module-specific handler for cmd [%s]", cmd);
         processCommandSpecific(token);
     }
