@@ -163,7 +163,6 @@ void touchpadIsr() {
 
 void feedbackLoop() {
     while (1) {
-        ESP_LOGI(TAG, "... feedback loop ...");
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        taskYIELD();
     }
 }

@@ -1,0 +1,12 @@
+{
+  "state0": {
+    "id": 0,
+    "color_neutral": [50, 100, 150],
+    "color_touched": [75, 125, 175]
+  },
+  "state1": {
+    "id": 1,
+    "color_neutral": [51, 101, 151],
+    "color_touched": [76, 126, 176]
+  }
+}

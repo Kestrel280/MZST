@@ -6,6 +6,6 @@ endif()
 
 list(APPEND srcs "CommonModule.c")
 
-idf_component_register(SRCS "CommonModule.c" "${srcs}"
+idf_component_register(SRCS "NetworkModule.c" "CommonModule.c" "${srcs}"
                     INCLUDE_DIRS "include"
                     REQUIRES NVSUtil Server esp_driver_gpio esp_driver_ledc driver)

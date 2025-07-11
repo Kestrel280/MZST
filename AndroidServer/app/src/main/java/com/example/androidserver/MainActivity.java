@@ -18,7 +18,12 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private WifiManager wifiManager;
     private Server server;
     private Server.ClientHandler debugSelectedHandler;
+    private JSONObject clientStates;
 
     public void debugBtn(View btnView) {
         ServerAction action = null;
@@ -109,7 +115,12 @@ public class MainActivity extends AppCompatActivity {
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        server = new Server(wifiManager, Server.PORT);
+        // TODO try/catch
+        InputStream clientStatesStream = this.getResources().openRawResource(R.raw.client_states);
+        String jsonString = new Scanner(clientStatesStream).useDelimiter("\\A").next();
+        try { clientStates = new JSONObject(jsonString); }
+        catch (JSONException e) { throw new RuntimeException(e); }
+        server = new Server(wifiManager, Server.PORT, clientStates);
 
         RadioGroup radioGrp = findViewById(R.id.debugRadioGrp);
         radioGrp.setOnCheckedChangeListener(radioListener);

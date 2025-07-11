@@ -6,7 +6,12 @@ import android.util.Pair;
 
 import com.example.androidserver.ServerAction.ActionType;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -17,6 +22,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -39,7 +45,7 @@ public class Server {
     private Thread nodeHandlerThread;
     private Thread transmitterHandlerThread;
     private Thread connectionListenerThread;
-
+    private JSONObject clientStates;
 
     /* ************************ */
     /*           Enums          */
@@ -57,14 +63,15 @@ public class Server {
     /*   Classes/Constructors   */
     /* ************************ */
 
-    public Server(WifiManager wifiManager, int port) {
+    public Server(WifiManager wifiManager, int port, JSONObject clientStates) {
 
         this.setState(ServerState.IDLE);
         this.actionHandler = new ActionHandler(this);
 
         try {
             serverSocket = new ServerSocket(port);
-            Log.i("server", String.format("(Server) Server started at %s:%d", getLocalIpAddress(), PORT));
+
+            this.clientStates = clientStates;
 
             userHandler = new ClientHandler("userHandler");
             nodeHandler = new ClientHandler("nodeHandler");
@@ -80,6 +87,7 @@ public class Server {
             connectionListener = new ConnectionListener(serverSocket, userHandler, nodeHandler, transmitterHandler);
             connectionListenerThread = new Thread(connectionListener);
             connectionListenerThread.start();
+            Log.i("server", String.format("(Server) Server started at %s:%d", getLocalIpAddress(), PORT));
         } catch (IOException i) {
             Log.d("server", i.toString());
         }
@@ -174,6 +182,23 @@ public class Server {
             Log.i("server", String.format("%s registering client %d of type %d with data %d", this.name, client.id, client.type, data));
             MainActivity.debugMsgToAppView(String.format("%s registering client %d of type %d w/ data = %d", this.name, client.id, client.type, data), "debug");
             newClientsQueue.add(client);
+
+            // Send client STATE_DEFINE messages for each state we may use
+            for (Iterator<String> it = clientStates.keys(); it.hasNext(); ) {
+                String key = it.next();
+                try {
+                    JSONObject stateEntry = clientStates.getJSONObject(key);
+                    int stateId = (int) stateEntry.get("id");
+                    JSONArray colorNeutral = stateEntry.getJSONArray("color_neutral");
+                    JSONArray colorTouched = stateEntry.getJSONArray("color_touched");
+                    postMsg(client.id, (new ServerMessage(String.format("REQ_ACK STATE_DEFINE %d %d %d %d %d %d %d", stateId, (int) colorNeutral.get(0), (int) colorNeutral.get(1), (int) colorNeutral.get(2), (int) colorTouched.get(0), (int) colorTouched.get(1), (int) colorTouched.get(2)))));
+                    //Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
+                    //postPromise(clientAck);
+                    //awaitPromise(clientAck);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         public void postBroadcast(ServerMessage msg) {

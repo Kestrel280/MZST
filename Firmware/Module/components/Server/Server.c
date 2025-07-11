@@ -173,7 +173,7 @@ void serverMessageLoop(void (*processCommandFunction)(char* cmd)) {
             buf[i] = '\0'; // Replace the newline with a null terminator: allows processMessage() to treat the buf as a string directly
             processCommandFunction(buf);
         }
-        vTaskDelay(250 / portTICK_PERIOD_MS);
+        taskYIELD();
     }
 }
 
