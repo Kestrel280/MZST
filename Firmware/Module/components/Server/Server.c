@@ -54,9 +54,12 @@ void __serverReconnect() {
     connected = true;    
 }
 
-bool serverConnect(const char* ip, uint16_t port, char ctype, uint16_t id) {
+bool serverConnect(const char* ip, uint16_t port, char ctype, uint16_t _id) {
     struct sockaddr_in dest_addr;
     int eno;
+
+    // Set static id variable
+    id = _id;
 
     // Set up outbound message ring buffer
     /* TODO obrbufSlots initialized with maxcount - 1

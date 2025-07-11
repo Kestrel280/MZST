@@ -192,9 +192,9 @@ public class Server {
                     JSONArray colorNeutral = stateEntry.getJSONArray("color_neutral");
                     JSONArray colorTouched = stateEntry.getJSONArray("color_touched");
                     postMsg(client.id, (new ServerMessage(String.format("REQ_ACK STATE_DEFINE %d %d %d %d %d %d %d", stateId, (int) colorNeutral.get(0), (int) colorNeutral.get(1), (int) colorNeutral.get(2), (int) colorTouched.get(0), (int) colorTouched.get(1), (int) colorTouched.get(2)))));
-                    //Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
-                    //postPromise(clientAck);
-                    //awaitPromise(clientAck);
+                    Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
+                    nodeHandler.postPromise(clientAck);
+                    nodeHandler.awaitPromise(clientAck);
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
