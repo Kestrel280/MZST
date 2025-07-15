@@ -198,7 +198,7 @@ public class Server {
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
-                postMsg(client.id, (new ServerMessage("STATE_SET 0")));
+                postMsg(client.id, (new ServerMessage(String.format("STATE_SET %d", retrieveClientStateId("default_state")))));
                 Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
                 nodeHandler.postPromise(clientAck);
                 nodeHandler.awaitPromise(clientAck);
@@ -433,6 +433,11 @@ public class Server {
             ex.printStackTrace();
         }
         return null;
+    }
+
+    public int retrieveClientStateId(String key) {
+        try { return clientStates.getJSONObject(key).getInt("id"); }
+        catch (JSONException e) { throw new RuntimeException(e); }
     }
 
     public void shutdown() {

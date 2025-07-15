@@ -23,6 +23,7 @@ import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity {
@@ -118,8 +119,15 @@ public class MainActivity extends AppCompatActivity {
         // TODO try/catch
         InputStream clientStatesStream = this.getResources().openRawResource(R.raw.client_states);
         String jsonString = new Scanner(clientStatesStream).useDelimiter("\\A").next();
-        try { clientStates = new JSONObject(jsonString); }
+        int stateId = 0;
+        try {
+            clientStates = new JSONObject(jsonString);
+            for (Iterator<String> it = clientStates.keys(); it.hasNext(); ) {
+                clientStates.getJSONObject(it.next()).put("id", ++stateId);
+            }
+        }
         catch (JSONException e) { throw new RuntimeException(e); }
+
         server = new Server(wifiManager, Server.PORT, clientStates);
 
         RadioGroup radioGrp = findViewById(R.id.debugRadioGrp);
