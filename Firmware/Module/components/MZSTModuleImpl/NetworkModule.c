@@ -36,7 +36,9 @@ int ctype = CTYPE_NODE; // Exported global variable
 State states[MAX_CLIENT_STATES] = {};
 int state;
 
+void setState(int newState);
 void touchpadIsr();
+
 static void rfTransmissionReceived(void* args) {
     char stamp = 0b0;
     ESP_EARLY_LOGI(TAG, "rcved %d %d %d %d | %d %d %d %d", gpio_get_level(RF_PIN_D0), gpio_get_level(RF_PIN_D1), gpio_get_level(RF_PIN_D2), gpio_get_level(RF_PIN_D3), gpio_get_level(RF_PIN_D4), gpio_get_level(RF_PIN_D5), gpio_get_level(RF_PIN_D6), gpio_get_level(RF_PIN_D7));
@@ -155,9 +157,7 @@ void processCommandSpecific(char* token) {
         states[stateId].colorTouched = colorTouched;
         ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
     } else if (strcmp(token, "STATE_SET") == 0) {
-        state = atoi(strtok(NULL, " "));
-
-        ESP_LOGI(TAG, "Set state to %d", state);
+        setState(atoi(strtok(NULL, " ")));
         return;
     }
 }
@@ -174,6 +174,11 @@ void setColor(int r, int g, int b) {
     ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_2);
 
     return;
+}
+
+void setState(int newState) {
+    state = newState;
+    ESP_LOGI(TAG, "Set state to %d", newState);
 }
 
 void touchpadIsr() {
