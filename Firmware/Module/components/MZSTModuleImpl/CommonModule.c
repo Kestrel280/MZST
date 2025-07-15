@@ -14,6 +14,7 @@ extern uint16_t mid;    // main.c, loaded from NVS
 static const char* TAG = "MZST_CommonModule";
 
 State states[MAX_CLIENT_STATES] = {};
+int state;
 
 inline int64_t getCurrentTimeAbsUs() {
     return esp_timer_get_time();
@@ -86,6 +87,10 @@ void processCommandCommon(char* cmd) {
         states[stateId].colorNeutral = colorNeutral;
         states[stateId].colorTouched = colorTouched;
         ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
+    } else if (strcmp(token, "STATE_SET") == 0) {
+        state = atoi(strtok(NULL, " "));
+        ESP_LOGI(TAG, "Set state to %d", state);
+        return;
     } else if (strcmp(token, "DEBUG_LOG") == 0) {
         ESP_LOGI(TAG, "Processed debug-log command");
         return;

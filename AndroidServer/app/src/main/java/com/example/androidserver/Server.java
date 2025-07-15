@@ -198,6 +198,10 @@ public class Server {
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
+                postMsg(client.id, (new ServerMessage("STATE_SET 0")));
+                Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
+                nodeHandler.postPromise(clientAck);
+                nodeHandler.awaitPromise(clientAck);
             }
         }
 
