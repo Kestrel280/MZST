@@ -10,6 +10,7 @@
 #include "MZSTModuleImpl.h"
 #include "Server.h"
 
+#define MAX_CLIENT_STATES 16
 #define LEDC_TIMER_RESOLUTION LEDC_TIMER_8_BIT
 #define SPEAKER_PIN GPIO_NUM_1
 #define SPEAKER_PIN_EN GPIO_NUM_5
@@ -31,6 +32,9 @@ extern uint16_t mid;    // main.c, loaded from NVS
 static const int ledcCountsPerCycle = (2 << (LEDC_TIMER_RESOLUTION - 1));
 static const char* TAG = "MZST_NtwkModule";
 int ctype = CTYPE_NODE; // Exported global variable
+
+State states[MAX_CLIENT_STATES] = {};
+int state;
 
 void touchpadIsr();
 static void rfTransmissionReceived(void* args) {
@@ -141,6 +145,21 @@ void processCommandSpecific(char* token) {
     */
 
     ESP_LOGI(TAG, "processCommandSpecific with initial token [%s]", token);
+
+    if (strcmp(token, "STATE_DEFINE") == 0) {
+        int stateId = atoi(strtok(NULL, " "));
+        if (stateId >= MAX_CLIENT_STATES) { ESP_LOGE(TAG, "Server trying to define state #%d, but MAX_CLIENT_STATES is %d", stateId, MAX_CLIENT_STATES); return; }
+        Color colorNeutral = {.r = atoi(strtok(NULL, " ")), .g = atoi(strtok(NULL, " ")), .b = atoi(strtok(NULL, " "))};
+        Color colorTouched = {.r = atoi(strtok(NULL, " ")), .g = atoi(strtok(NULL, " ")), .b = atoi(strtok(NULL, " "))};
+        states[stateId].colorNeutral = colorNeutral;
+        states[stateId].colorTouched = colorTouched;
+        ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
+    } else if (strcmp(token, "STATE_SET") == 0) {
+        state = atoi(strtok(NULL, " "));
+
+        ESP_LOGI(TAG, "Set state to %d", state);
+        return;
+    }
 }
 
 void setColor(int r, int g, int b) {

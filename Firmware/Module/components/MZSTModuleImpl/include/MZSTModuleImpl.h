@@ -4,9 +4,6 @@
 // Returns current time
 int64_t getCurrentTimeAbsUs();
 
-// Maximum number of states the node can store
-#define MAX_CLIENT_STATES 16
-
 // Helpers to keep track of state
 typedef struct _Color { int r, g, b; } Color;
 typedef struct _State { Color colorNeutral, colorTouched; } State;
