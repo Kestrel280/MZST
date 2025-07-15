@@ -99,10 +99,8 @@ void app_main(void) {
     // Register with server
     serverSend(ctype, mid, 1234);
 
-    struct timeval tv_now;
     while (1) {
-        gettimeofday(&tv_now, NULL);
-        ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %5lli.%6lli", i++, int_out, mid, serverIp, (int64_t)tv_now.tv_sec, (int64_t)tv_now.tv_usec);
+        ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %12lld", i++, int_out, mid, serverIp, getCurrentTimeAbsUs());
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         setColor((i % 3) == 0 ? 255 : 0, ((i+1) % 3) == 0 ? 255 : 0, ((i+2) % 3) == 0 ? 255 : 0);
     }

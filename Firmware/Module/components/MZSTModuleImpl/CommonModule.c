@@ -3,6 +3,8 @@
 
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_timer.h"
+//#include "esp_sntp.h" /* gettimeofday */
 
 #include "MZSTModuleImpl.h"
 #include "NVSUtil.h"
@@ -12,6 +14,19 @@ extern uint16_t mid;    // main.c, loaded from NVS
 static const char* TAG = "MZST_CommonModule";
 
 State states[MAX_CLIENT_STATES] = {};
+
+inline int64_t getCurrentTimeAbsUs() {
+    return esp_timer_get_time();
+    /*
+    struct timeval tv_now;
+    if (gettimeofday(&tv_now, NULL) != 0) {
+        ESP_EARLY_LOGE(TAG, "Failure to get current time");
+        return 0;
+    }
+    //ESP_EARLY_LOGI(TAG, "getCurrentTimeAbs gave tv_now.tv_sec = %d, tv_now.tv_usec = %d", tv_now.tv_sec, tv_now.tv_usec);
+    return ((int64_t)tv_now.tv_sec*1000000LL + (int64_t)tv_now.tv_usec);
+    */
+}
 
 void processCommandCommon(char* cmd) {
     /* Nominally entered by Server's messageLoop()

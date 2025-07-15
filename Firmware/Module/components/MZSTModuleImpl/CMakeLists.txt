@@ -1,11 +1,11 @@
 if(CONFIG_MZST_NETWORK_MODULE)
-    set(srcs NetworkModule.c)
+    set(_srcs NetworkModule.c)
 elseif(CONFIG_MZST_TRANSMITTER_MODULE)
-    set(srcs TransmitterModule.c)
+    set(_srcs TransmitterModule.c)
 endif()
 
-list(APPEND srcs "CommonModule.c")
+list(APPEND _srcs "CommonModule.c")
 
-idf_component_register(SRCS "NetworkModule.c" "CommonModule.c" "${srcs}"
+idf_component_register(SRCS "CommonModule.c" "${_srcs}"
                     INCLUDE_DIRS "include"
-                    REQUIRES NVSUtil Server esp_driver_gpio esp_driver_ledc driver)
+                    REQUIRES NVSUtil Server esp_driver_gpio esp_driver_ledc esp_timer driver)

@@ -1,6 +1,9 @@
 #ifndef MZST_MODULEIMPL_H
 #define MZST_MODULEIMPL_H
 
+// Returns current time
+int64_t getCurrentTimeAbsUs();
+
 // Maximum number of states the node can store
 #define MAX_CLIENT_STATES 16
 
