@@ -150,8 +150,6 @@ void processCommandSpecific(char* token) {
     Initial token passed as arg; strtok(NULL, " ") returns pointer to next token
     */
 
-    ESP_LOGI(TAG, "processCommandSpecific with initial token [%s]", token);
-
     if (strcmp(token, "STATE_DEFINE") == 0) {
         int stateId = atoi(strtok(NULL, " "));
         if (stateId >= MAX_CLIENT_STATES) { ESP_LOGE(TAG, "Server trying to define state #%d, but MAX_CLIENT_STATES is %d", stateId, MAX_CLIENT_STATES); return; }
@@ -160,12 +158,15 @@ void processCommandSpecific(char* token) {
         states[stateId].colorNeutral = colorNeutral;
         states[stateId].colorTouched = colorTouched;
         ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
+        return;
     } else if (strcmp(token, "UNTOUCH") == 0) {
         pendingServerUntouch = true;
+        return;
     } else if (strcmp(token, "STATE_SET") == 0) {
         setState(atoi(strtok(NULL, " ")));
         return;
     }
+    ESP_LOGI(TAG, "No handler found for token [%s]", token);
 }
 
 void setColor(int r, int g, int b) {

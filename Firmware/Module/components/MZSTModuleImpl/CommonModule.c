@@ -80,7 +80,6 @@ void processCommandCommon(char* cmd) {
         ESP_LOGI(TAG, "Processed debug-log command");
         return;
     } else {
-        ESP_LOGI(TAG, "... no common case found for token, falling through to module-specific handler for token [%s]", token);
         processCommandSpecific(token);
     }
 }

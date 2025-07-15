@@ -1,13 +1,51 @@
 {
-  "state0": {
+  "default_state": {
+    "comment": "Default ClientState assigned to clients upon connection.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "READYRUN_start_node": {
+    "comment": "In READYRUN ServerState: ClientState for the starting node of a Course.",
     "color_neutral": [50, 100, 150],
     "color_touched": [75, 125, 175]
   },
-  "state1": {
+  "READYRUN_no_triggers_done": {
+    "comment": "In READYRUN ServerState: initial ClientState for all participating nodes of a Course (excluding the starting node).",
     "color_neutral": [51, 101, 151],
     "color_touched": [76, 126, 176]
   },
-  "default_state": {
+  "READYRUN_some_triggers_done": {
+    "comment": "In READYRUN ServerState: ClientState for all participating nodes of a course which have some, but not all, of their required touches completed.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "READYRUN_all_triggers_done": {
+    "comment": "In READYRUN ServerState: ClientState for all participating nodes of a course which have all of their required touches completed.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "READYRUN_not_in_course": {
+    "comment": "In READYRUN ServerState: ClientState for all non-participating nodes of a Course.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "DEFINE_not_in_course": {
+    "comment": "In DEFINE ServerState: Initial ClientState for nodes, indicating they have not been added to the course.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "DEFINE_in_course": {
+    "comment": "In DEFINE ServerState: ClientState for a node which has been added to the course, but is not the currently selected node.",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "DEFINE_selected_node": {
+    "comment": "In DEFINE ServerState: ClientState for the actively selected node (nominally, the most-recently-added node).",
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
+  },
+  "FINISHED_successful_run": {
+    "comment": "In FINISHED ServerState, upon successful course completion: ClientState for all nodes.",
     "color_neutral": [255, 0, 0],
     "color_touched": [0, 255, 255]
   }

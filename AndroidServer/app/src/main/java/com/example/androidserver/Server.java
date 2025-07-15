@@ -195,6 +195,7 @@ public class Server {
                     Promise clientAck = new Promise(client.id, ClientMessage.MTYPE_ACK);
                     nodeHandler.postPromise(clientAck);
                     nodeHandler.awaitPromise(clientAck);
+                    Log.i("server", String.format("ClientHandler registering ClientState '%s' with client %d", key, client.id));
                 } catch (JSONException e) {
                     throw new RuntimeException(e);
                 }
@@ -324,7 +325,7 @@ public class Server {
     /* ************************ */
 
     public void createNewCourse() {
-        nodeHandler.postBroadcast(new ServerMessage("SET_STATE DEFINE_NotInCourse"));
+        nodeHandler.postBroadcast(new ServerMessage(String.format("STATE_SET %d", retrieveClientStateId("DEFINE_not_in_course"))));
         this.currentCourse = new Course();
     }
 
@@ -344,13 +345,14 @@ public class Server {
                 return;
             }
 
+            // Update the previous node's ClientState from SelectedNode to InCourse
             nodeHandler.postMsg(
                     currentCourse.nodeSequence.get(currentCourse.nodeSequence.size() - 1),
-                    new ServerMessage("SET_STATE DEFINE_InCourse"));
+                    new ServerMessage(String.format("STATE_SET %d", retrieveClientStateId("DEFINE_in_course"))));
         }
 
         // Now set the state of the newly touched node to DEFINE_SelectedNode
-        nodeHandler.postMsg(nodeId, new ServerMessage("SET_STATE DEFINE_SelectedNode"));
+        nodeHandler.postMsg(nodeId, new ServerMessage(String.format("STATE_SET %d", retrieveClientStateId("DEFINE_selected_node"))));
 
         // Finally, add the node to the course
         currentCourse.addNode(nodeId);
@@ -362,20 +364,20 @@ public class Server {
 
         // Set the state of each node, one by one
         // Wait for an ACK between each message
-        // The FIRST course node (currentCourse.nodeSequence.first()) gets "SET_STATE READYRUN_StartNode"
-        // Rest of the course nodes get "SET_STATE READYRUN_NoTriggersDone"
-        // Everything else gets "SET_STATE READYRUN_NotPartOfCourse"
+        // The FIRST course node (currentCourse.nodeSequence.first()) gets "STATE_SET READYRUN_StartNode"
+        // Rest of the course nodes get "STATE_SET READYRUN_NoTriggersDone"
+        // Everything else gets "STATE_SET READYRUN_NotPartOfCourse"
         for (Client client : nodeHandler.clients.values()) {
             Log.i("debug", "prepping node " + client.id);
             promise = new Promise(client.id, ClientMessage.MTYPE_ACK);
             nodeHandler.postPromise(promise);
 
             if (currentCourse.nodeSequence.get(0) == client.id) {
-                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_StartNode"));
+                nodeHandler.postMsg(client.id, new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("READYRUN_start_node"))));
             } else if (currentCourse.nodeSequence.contains(client.id)) {
-                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_NoTriggersDone"));
+                nodeHandler.postMsg(client.id, new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("READYRUN_no_triggers_done"))));
             } else {
-                nodeHandler.postMsg(client.id, new ServerMessage("REQ_ACK SET_STATE READYRUN_NotPartOfCourse"));
+                nodeHandler.postMsg(client.id, new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("READYRUN_not_in_course"))));
             }
 
             nodeHandler.awaitPromise(promise);
@@ -394,21 +396,21 @@ public class Server {
 
             // Check for win
             if (currentCourseRemainingNodes.isEmpty()) {
-                nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_SuccessfulRun"));
+                nodeHandler.postBroadcast(new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("FINISHED_successful_run"))));
                 return true;
             }
 
             // No win; update status of this node and continue
             if (currentCourseRemainingNodes.contains(nodeId)) {
-                nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_SomeTriggersDone"));
+                nodeHandler.postMsg(nodeId, new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("READYRUN_some_triggers_done"))));
             } else {
-                nodeHandler.postMsg(nodeId, new ServerMessage("REQ_ACK SET_STATE READYRUN_AllTriggersDone"));
+                nodeHandler.postMsg(nodeId, new ServerMessage(String.format("REQ_ACK STATE_SET %d", retrieveClientStateId("READYRUN_all_triggers_done"))));
             }
             return false;
         }
         // If the INCORRECT node was hit, untrigger it
         else {
-            //nodeHandler.postBroadcast(new ServerMessage("REQ_ACK SET_STATE FINISHED_UnsuccessfulRun"));
+            //nodeHandler.postBroadcast(new ServerMessage("REQ_ACK STATE_SET FINISHED_UnsuccessfulRun"));
             nodeHandler.postBroadcast(new ServerMessage("UNTOUCH"));
             return false;
         }
