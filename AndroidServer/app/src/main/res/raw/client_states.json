@@ -8,7 +8,7 @@
     "color_touched": [76, 126, 176]
   },
   "default_state": {
-    "color_neutral": [52, 102, 152],
-    "color_touched": [77, 127, 177]
+    "color_neutral": [255, 0, 0],
+    "color_touched": [0, 255, 255]
   }
 }

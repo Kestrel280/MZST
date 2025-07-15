@@ -10,6 +10,7 @@
 #include "MZSTModuleImpl.h"
 #include "Server.h"
 
+#define TOUCH_TIMEOUT_US 1000000ULL
 #define MAX_CLIENT_STATES 16
 #define LEDC_TIMER_RESOLUTION LEDC_TIMER_8_BIT
 #define SPEAKER_PIN GPIO_NUM_1
@@ -32,6 +33,7 @@ extern uint16_t mid;    // main.c, loaded from NVS
 static const int ledcCountsPerCycle = (2 << (LEDC_TIMER_RESOLUTION - 1));
 static const char* TAG = "MZST_NtwkModule";
 int ctype = CTYPE_NODE; // Exported global variable
+uint32_t touchpadBaseValue;
 int64_t timeLastTouchUs;
 bool inTouchCooldown = false;
 bool pendingServerUntouch = false;
@@ -113,16 +115,15 @@ void initMzstModule() {
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
 
     /* Touchpad configuration */
-    uint32_t tpval;
     ESP_ERROR_CHECK(touch_pad_init());
     ESP_ERROR_CHECK(touch_pad_config(TOUCHPAD_PIN));
     ESP_ERROR_CHECK(touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER));
     ESP_ERROR_CHECK(touch_pad_fsm_start());
-    ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));
-    ESP_ERROR_CHECK(touch_pad_set_thresh(TOUCHPAD_PIN, tpval * 9 / 8));
+    ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &touchpadBaseValue));
+    ESP_ERROR_CHECK(touch_pad_set_thresh(TOUCHPAD_PIN, touchpadBaseValue * 9 / 8));
     ESP_ERROR_CHECK(touch_pad_isr_register(touchpadIsr, NULL, TOUCH_PAD_INTR_MASK_ALL));
     ESP_ERROR_CHECK(touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE | TOUCH_PAD_INTR_MASK_TIMEOUT));
-    ESP_LOGI(TAG, "Touchpad configured with threshold %lu", tpval * 9 / 8);
+    ESP_LOGI(TAG, "Touchpad configured with threshold %lu", touchpadBaseValue * 9 / 8);
     
     /* RF configuration */
     gpio_config_t rf_pin_config = {};
@@ -159,6 +160,8 @@ void processCommandSpecific(char* token) {
         states[stateId].colorNeutral = colorNeutral;
         states[stateId].colorTouched = colorTouched;
         ESP_LOGI(TAG, "Registered state %d with colorNeutral (%d, %d, %d) and colorTouched (%d, %d, %d)", stateId, colorNeutral.r, colorNeutral.g, colorNeutral.b, colorTouched.r, colorTouched.g, colorTouched.b);
+    } else if (strcmp(token, "UNTOUCH") == 0) {
+        pendingServerUntouch = true;
     } else if (strcmp(token, "STATE_SET") == 0) {
         setState(atoi(strtok(NULL, " ")));
         return;
@@ -182,8 +185,6 @@ void setColor(int r, int g, int b) {
 void setState(int newState) {
     state = newState;
     Color cn = states[state].colorNeutral;
-    Color ct = states[state].colorTouched;
-
     setColor(cn.r, cn.g, cn.b);
     ESP_LOGI(TAG, "Set state to %d", newState);
 }
@@ -191,6 +192,9 @@ void setState(int newState) {
 void touchpadIsr() {
     if (!inTouchCooldown) {
         timeLastTouchUs = getCurrentTimeAbsUs();
+        ESP_EARLY_LOGI(TAG, "Touched at time %lld", timeLastTouchUs);
+        Color ct = states[state].colorTouched;
+        setColor(ct.r, ct.g, ct.b);
         inTouchCooldown = true;
         serverSend(MTYPE_TOUCHED, mid, 123); // TODO serverSend can, in theory, block; might want a trySend() or something
     }
@@ -198,9 +202,24 @@ void touchpadIsr() {
 
 void feedbackLoop() {
     while (1) {
+        // If we're inTouchCooldown, check if enough time has passed (and we're not still touching) to exit the cooldown
         if (inTouchCooldown) {
-            ESP_LOGI(TAG, "Touched, timeLastTouch = %lld", timeLastTouchUs);
+            if ((getCurrentTimeAbsUs() - timeLastTouchUs) > TOUCH_TIMEOUT_US) {
+                uint32_t tpval;
+                ESP_ERROR_CHECK(touch_pad_read_raw_data(TOUCHPAD_PIN, &tpval));
+                if (tpval < (touchpadBaseValue * 9/8)) {
+                    inTouchCooldown = false;
+                    ESP_LOGI(TAG, "Exiting touch cooldown at %lld, tpval is %ld", getCurrentTimeAbsUs(), tpval);
+                }
+            }
+        }
+
+        // If we're not in touch cooldown, and the server has given us the OK to untouch, do so
+        if (!inTouchCooldown && pendingServerUntouch) {
             inTouchCooldown = false;
+            pendingServerUntouch = true;
+            Color cn = states[state].colorNeutral;
+            setColor(cn.r, cn.g, cn.b);
         }
         taskYIELD();
     }

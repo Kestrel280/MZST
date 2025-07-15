@@ -102,6 +102,5 @@ void app_main(void) {
     while (1) {
         ESP_LOGI(TAG, "i = %5d | NVS SERVER_PORT = %lu | MODULE_ID = %d | NVS SERVER_IP = %s | TIME = %12lld", i++, int_out, mid, serverIp, getCurrentTimeAbsUs());
         vTaskDelay(10000 / portTICK_PERIOD_MS);
-        setColor((i % 3) == 0 ? 255 : 0, ((i+1) % 3) == 0 ? 255 : 0, ((i+2) % 3) == 0 ? 255 : 0);
     }
 }
