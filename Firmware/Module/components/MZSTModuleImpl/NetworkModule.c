@@ -32,6 +32,9 @@ extern uint16_t mid;    // main.c, loaded from NVS
 static const int ledcCountsPerCycle = (2 << (LEDC_TIMER_RESOLUTION - 1));
 static const char* TAG = "MZST_NtwkModule";
 int ctype = CTYPE_NODE; // Exported global variable
+int64_t timeLastTouchUs;
+bool inTouchCooldown = false;
+bool pendingServerUntouch = false;
 
 State states[MAX_CLIENT_STATES] = {};
 int state;
@@ -178,15 +181,27 @@ void setColor(int r, int g, int b) {
 
 void setState(int newState) {
     state = newState;
+    Color cn = states[state].colorNeutral;
+    Color ct = states[state].colorTouched;
+
+    setColor(cn.r, cn.g, cn.b);
     ESP_LOGI(TAG, "Set state to %d", newState);
 }
 
 void touchpadIsr() {
-    serverSend(MTYPE_TOUCHED, mid, 123); // TODO serverSend can, in theory, block; might want a trySend() or something
+    if (!inTouchCooldown) {
+        timeLastTouchUs = getCurrentTimeAbsUs();
+        inTouchCooldown = true;
+        serverSend(MTYPE_TOUCHED, mid, 123); // TODO serverSend can, in theory, block; might want a trySend() or something
+    }
 }
 
 void feedbackLoop() {
     while (1) {
+        if (inTouchCooldown) {
+            ESP_LOGI(TAG, "Touched, timeLastTouch = %lld", timeLastTouchUs);
+            inTouchCooldown = false;
+        }
         taskYIELD();
     }
 }
